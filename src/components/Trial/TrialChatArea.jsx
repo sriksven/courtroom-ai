@@ -1,0 +1,251 @@
+import { useRef, useEffect, useState, useCallback } from 'react'
+
+// ── Playback state: only one bubble plays at a time ──────────────────────────
+
+function useAudioPlayer() {
+  const [playingId, setPlayingId] = useState(null)
+  const [loadingId, setLoadingId] = useState(null)
+  const audioRef = useRef(null)
+
+  const stop = useCallback(() => {
+    if (audioRef.current) {
+      audioRef.current.pause()
+      audioRef.current.src = ''
+      audioRef.current = null
+    }
+    setPlayingId(null)
+    setLoadingId(null)
+  }, [])
+
+  const play = useCallback(async (id, text, voice = 'onyx') => {
+    stop()
+    setLoadingId(id)
+    try {
+      const res = await fetch('/api/tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, voice }),
+      })
+      if (!res.ok) throw new Error('TTS failed')
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const audio = new Audio(url)
+      audioRef.current = audio
+      setLoadingId(null)
+      setPlayingId(id)
+      audio.onended = () => { setPlayingId(null); URL.revokeObjectURL(url) }
+      audio.onerror = () => { setPlayingId(null); URL.revokeObjectURL(url) }
+      await audio.play()
+    } catch {
+      setLoadingId(null)
+      setPlayingId(null)
+    }
+  }, [stop])
+
+  const pause = useCallback(() => {
+    if (audioRef.current && !audioRef.current.paused) {
+      audioRef.current.pause()
+      setPlayingId(id => id ? `${id}__paused` : null)
+    }
+  }, [])
+
+  const resume = useCallback(() => {
+    if (audioRef.current?.paused) {
+      audioRef.current.play()
+      setPlayingId(id => id?.replace('__paused', '') ?? null)
+    }
+  }, [])
+
+  return { playingId, loadingId, play, pause, resume, stop }
+}
+
+// ── Play/Pause/Stop control ───────────────────────────────────────────────────
+
+function PlayButton({ msgId, text, voice, player }) {
+  const { playingId, loadingId, play, pause, resume, stop } = player
+  const isLoading = loadingId === msgId
+  const isPlaying = playingId === msgId
+  const isPaused = playingId === `${msgId}__paused`
+  const isActive = isPlaying || isPaused
+
+  function handleClick() {
+    if (isLoading) return
+    if (isPlaying) pause()
+    else if (isPaused) resume()
+    else play(msgId, text, voice)
+  }
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '6px' }}>
+      <button
+        onClick={handleClick}
+        title={isPlaying ? 'Pause' : isPaused ? 'Resume' : 'Play'}
+        style={{
+          background: 'none',
+          border: 'none',
+          cursor: isLoading ? 'wait' : 'pointer',
+          padding: '2px 4px',
+          color: isActive ? 'var(--text)' : 'var(--text-muted)',
+          fontSize: '13px',
+          lineHeight: 1,
+          opacity: isLoading ? 0.5 : 1,
+          transition: 'color 0.15s',
+        }}
+      >
+        {isLoading ? '⟳' : isPlaying ? '⏸' : '▶'}
+      </button>
+      {isActive && (
+        <button
+          onClick={stop}
+          title="Stop"
+          style={{
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            padding: '2px 4px',
+            color: 'var(--text-muted)',
+            fontSize: '11px',
+            lineHeight: 1,
+          }}
+        >
+          ■
+        </button>
+      )}
+    </div>
+  )
+}
+
+// ── Loading dots ──────────────────────────────────────────────────────────────
+
+function LoadingDots() {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '1rem', justifyContent: 'center' }}>
+      <span style={{ fontSize: '12px', color: 'var(--text-muted)', fontStyle: 'italic' }}>
+        The court deliberates
+      </span>
+      {[0, 1, 2].map(i => (
+        <span key={i} className="loading-dot" style={{ animationDelay: `${i * 0.15}s` }} />
+      ))}
+    </div>
+  )
+}
+
+// ── Chat bubbles ──────────────────────────────────────────────────────────────
+
+function ChatBubble({ message, player }) {
+  const { role, content, timestamp } = message
+
+  const formatTime = (ts) => {
+    if (!ts) return ''
+    const d = new Date(ts)
+    return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+  }
+
+  if (role === 'system') {
+    return (
+      <div style={{ textAlign: 'center', padding: '0.5rem', color: 'var(--text-muted)', fontSize: '11px' }}>
+        {content}
+      </div>
+    )
+  }
+
+  if (role === 'judge') {
+    return (
+      <div className="bubble-in" style={{ textAlign: 'center', padding: '1rem 2rem', margin: '0.5rem 0' }}>
+        <div style={{ fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '4px' }}>
+          The Court
+        </div>
+        <div style={{
+          borderLeft: '2px solid var(--judge-border)',
+          borderRight: '2px solid var(--judge-border)',
+          padding: '0.5rem 1rem',
+          background: 'var(--judge-bg)',
+        }}>
+          <p style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: '14px', color: 'var(--text)', margin: 0 }}>
+            {content}
+          </p>
+          <PlayButton msgId={message.id} text={content} voice="shimmer" player={player} />
+        </div>
+      </div>
+    )
+  }
+
+  if (role === 'prosecutor') {
+    return (
+      <div className="bubble-in" style={{ maxWidth: '80%', marginBottom: '0.75rem' }}>
+        <div style={{ fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--prosecutor-border)', marginBottom: '4px' }}>
+          Prosecution
+        </div>
+        <div style={{
+          borderLeft: '2px solid var(--prosecutor-border)',
+          background: 'var(--prosecutor-bg)',
+          padding: '0.75rem 1rem',
+          fontFamily: 'Georgia, serif',
+          fontSize: '14px',
+          lineHeight: 1.6,
+          color: 'var(--text)',
+        }}>
+          <p style={{ margin: 0 }}>{content}</p>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <PlayButton msgId={message.id} text={content} voice="onyx" player={player} />
+            {timestamp && (
+              <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{formatTime(timestamp)}</span>
+            )}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (role === 'defense') {
+    return (
+      <div className="bubble-in" style={{ maxWidth: '80%', marginLeft: 'auto', marginBottom: '0.75rem' }}>
+        <div style={{ fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--defense-border)', marginBottom: '4px', textAlign: 'right' }}>
+          Defense
+        </div>
+        <div style={{
+          borderRight: '2px solid var(--defense-border)',
+          background: 'var(--defense-bg)',
+          padding: '0.75rem 1rem',
+          fontFamily: 'Georgia, serif',
+          fontSize: '14px',
+          lineHeight: 1.6,
+          color: 'var(--text)',
+        }}>
+          <p style={{ margin: 0 }}>{content}</p>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexDirection: 'row-reverse' }}>
+            <PlayButton msgId={message.id} text={content} voice="alloy" player={player} />
+            {timestamp && (
+              <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{formatTime(timestamp)}</span>
+            )}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  return null
+}
+
+// ── Main export ───────────────────────────────────────────────────────────────
+
+export default function TrialChatArea({ messages, isLoading }) {
+  const bottomRef = useRef(null)
+  const player = useAudioPlayer()
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages, isLoading])
+
+  return (
+    <div style={{ flex: 1, overflowY: 'auto', background: 'var(--bg)' }}>
+      <div style={{ maxWidth: '720px', margin: '0 auto', padding: '1.25rem 1.5rem' }}>
+        {messages.map(msg => (
+          <ChatBubble key={msg.id} message={msg} player={player} />
+        ))}
+        {isLoading && <LoadingDots />}
+        <div style={{ height: '1rem' }} ref={bottomRef} />
+      </div>
+    </div>
+  )
+}
