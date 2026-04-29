@@ -33,5 +33,5 @@ yarn-error.log*
 .vite/
 .vercel
 
-# Design docs
-docs/
+# Internal design specs (superpowers generated)
+docs/superpowers/
