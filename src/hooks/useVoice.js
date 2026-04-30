@@ -24,6 +24,9 @@ export function useVoice({ onTranscript, enabled = true }) {
   const isAvailable = enabled && typeof window !== 'undefined' &&
     ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)
 
+  const shouldListenRef = useRef(false)
+  const finalTranscriptRef = useRef('')
+
   const startListening = useCallback(() => {
     if (!isAvailable) {
       setErrorMessage('Voice input not supported in this browser.')
@@ -31,49 +34,63 @@ export function useVoice({ onTranscript, enabled = true }) {
       return
     }
 
+    shouldListenRef.current = true
+    finalTranscriptRef.current = ''
     setVoiceState(VOICE_STATES.INITIALIZING)
 
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
-    const recognition = new SpeechRecognition()
-    recognition.continuous = false
-    recognition.interimResults = true
-    recognition.lang = 'en-US'
+    function createAndStart() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
+      const recognition = new SpeechRecognition()
+      recognition.continuous = true
+      recognition.interimResults = true
+      recognition.lang = 'en-US'
 
-    let finalTranscript = ''
+      recognition.onresult = (event) => {
+        let interim = ''
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const t = event.results[i][0].transcript
+          if (event.results[i].isFinal) {
+            finalTranscriptRef.current += t
+          } else {
+            interim += t
+          }
+        }
+        const live = finalTranscriptRef.current + interim
+        setTranscript(live)
+        setVoiceState(VOICE_STATES.LISTENING)
+        if (onTranscript) onTranscript(live)
+      }
 
-    recognition.onresult = (event) => {
-      let interim = ''
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const t = event.results[i][0].transcript
-        if (event.results[i].isFinal) {
-          finalTranscript += t
+      // Chrome stops continuous recognition after ~60s of silence — auto-restart
+      recognition.onend = () => {
+        if (shouldListenRef.current) {
+          try { createAndStart() } catch { setVoiceState(VOICE_STATES.IDLE) }
         } else {
-          interim += t
+          setVoiceState(VOICE_STATES.IDLE)
         }
       }
-      const live = finalTranscript + interim
-      setTranscript(live)
+
+      recognition.onerror = (event) => {
+        if (event.error === 'no-speech' && shouldListenRef.current) return
+        if (event.error === 'aborted') return
+        setErrorMessage(event.error)
+        setVoiceState(VOICE_STATES.ERROR)
+        shouldListenRef.current = false
+      }
+
+      recognition.start()
       setVoiceState(VOICE_STATES.LISTENING)
-      if (onTranscript) onTranscript(live)
+      recognitionRef.current = recognition
     }
 
-    recognition.onend = () => {
-      setVoiceState(VOICE_STATES.IDLE)
-    }
-
-    recognition.onerror = (event) => {
-      setErrorMessage(event.error)
-      setVoiceState(VOICE_STATES.ERROR)
-    }
-
-    recognition.start()
-    setVoiceState(VOICE_STATES.LISTENING)
-    recognitionRef.current = recognition
+    createAndStart()
   }, [isAvailable, onTranscript])
 
   const stopListening = useCallback(() => {
+    shouldListenRef.current = false
     if (recognitionRef.current) {
       recognitionRef.current.stop()
+      recognitionRef.current = null
     }
     setVoiceState(VOICE_STATES.IDLE)
   }, [])

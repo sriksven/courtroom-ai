@@ -118,15 +118,20 @@ export default function TrialInputBar() {
               width: '40px',
               height: '40px',
               border: `1px solid ${isListening ? '#ef4444' : 'var(--border)'}`,
-              background: isListening ? '#fef2f2' : 'var(--bg-card)',
-              color: isListening ? '#ef4444' : 'var(--text-muted)',
+              background: isListening ? '#ef4444' : 'var(--bg-card)',
+              color: isListening ? '#fff' : 'var(--text-muted)',
               cursor: 'pointer',
-              fontSize: '16px',
+              fontSize: isListening ? '13px' : '16px',
+              fontFamily: 'Georgia, serif',
+              fontWeight: isListening ? 'bold' : 'normal',
               flexShrink: 0,
               transition: 'all 0.2s',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
           >
-            {isListening ? '⏹' : '🎙'}
+            {isListening ? '■' : '🎙'}
           </button>
         )}
       </div>
