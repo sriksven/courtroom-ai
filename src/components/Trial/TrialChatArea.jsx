@@ -256,6 +256,50 @@ function ChatBubble({ message, player }) {
     )
   }
 
+  if (role === 'prosecution_witness') {
+    const profile = message.witnessProfile
+    return (
+      <div className="bubble-in" style={{ maxWidth: '80%', marginBottom: '0.75rem' }}>
+        <div style={{ fontSize: '10px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#E8A838', marginBottom: '4px' }}>
+          {profile?.name ?? 'Witness'} — Prosecution
+        </div>
+        <div style={{
+          borderLeft: '2px solid #E8A838',
+          background: 'var(--bg-card)',
+          padding: '0.75rem 1rem',
+          fontFamily: 'Georgia, serif',
+          fontSize: '14px',
+          lineHeight: 1.6,
+          color: 'var(--text)',
+        }}>
+          <p style={{ margin: 0 }}>{displayContent}</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (role === 'defense_witness') {
+    const profile = message.witnessProfile
+    return (
+      <div className="bubble-in" style={{ maxWidth: '80%', marginLeft: 'auto', marginBottom: '0.75rem' }}>
+        <div style={{ fontSize: '10px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#1D9E75', marginBottom: '4px', textAlign: 'right' }}>
+          {profile?.name ?? 'Witness'} — Defense
+        </div>
+        <div style={{
+          borderRight: '2px solid #1D9E75',
+          background: 'var(--bg-card)',
+          padding: '0.75rem 1rem',
+          fontFamily: 'Georgia, serif',
+          fontSize: '14px',
+          lineHeight: 1.6,
+          color: 'var(--text)',
+        }}>
+          <p style={{ margin: 0 }}>{displayContent}</p>
+        </div>
+      </div>
+    )
+  }
+
   return null
 }
 

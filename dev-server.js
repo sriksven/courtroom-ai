@@ -28,6 +28,10 @@ app.all('/api/judge', wrap(loadHandler('./api/judge.js')))
 app.all('/api/defense-hint', wrap(loadHandler('./api/defense-hint.js')))
 app.all('/api/tts', wrap(loadHandler('./api/tts.js')))
 app.all('/api/livekit-token', wrap(loadHandler('./api/livekit-token.js')))
+app.all('/api/generate-witnesses', wrap(loadHandler('./api/generate-witnesses.js')))
+app.all('/api/witness-testimony', wrap(loadHandler('./api/witness-testimony.js')))
+app.all('/api/witness-response', wrap(loadHandler('./api/witness-response.js')))
+app.all('/api/witness-cross', wrap(loadHandler('./api/witness-cross.js')))
 
 const PORT = 3001
 app.listen(PORT, () => console.log(`API server running on http://localhost:${PORT}`))

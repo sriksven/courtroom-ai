@@ -12,6 +12,9 @@ export default function LandingPage({ onStart }) {
   const [difficulty, setDifficulty] = useState('normal')
   const [topicInput, setTopicInput] = useState('')
   const [generatingCharge, setGeneratingCharge] = useState(false)
+  const [witnessConfig, setWitnessConfig] = useState({ enabled: false, prosecutionCount: 2, defenseWitnesses: [] })
+  const [generatingWitnesses, setGeneratingWitnesses] = useState(false)
+  const [generatedWitnesses, setGeneratedWitnesses] = useState([])
   const casesRef = useRef(null)
 
   const activeAccusation = customText.trim()
@@ -25,7 +28,7 @@ export default function LandingPage({ onStart }) {
   async function handleStart() {
     if (!canStart || isLoading) return
     const rounds = isDynamic ? 'dynamic' : selectedRounds
-    await startTrial(activeAccusation, rounds, difficulty)
+    await startTrial(activeAccusation, rounds, difficulty, witnessConfig.enabled ? witnessConfig : null)
     onStart(mode)
   }
 
@@ -46,6 +49,31 @@ export default function LandingPage({ onStart }) {
     } catch { /* ignore */ } finally {
       setGeneratingCharge(false)
     }
+  }
+
+  async function handleGenerateWitnesses() {
+    if (!activeAccusation || generatingWitnesses) return
+    setGeneratingWitnesses(true)
+    try {
+      const res = await fetch('/api/generate-witnesses', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ accusation: activeAccusation, side: 'defense', count: 4 }),
+      })
+      const data = await res.json()
+      setGeneratedWitnesses(data.witnesses || [])
+    } catch { /* ignore */ } finally {
+      setGeneratingWitnesses(false)
+    }
+  }
+
+  function toggleWitness(witness) {
+    setWitnessConfig(prev => {
+      const already = prev.defenseWitnesses.find(w => w.id === witness.id)
+      if (already) return { ...prev, defenseWitnesses: prev.defenseWitnesses.filter(w => w.id !== witness.id) }
+      if (prev.defenseWitnesses.length >= 2) return prev
+      return { ...prev, defenseWitnesses: [...prev.defenseWitnesses, witness] }
+    })
   }
 
   function scrollToCases() {
@@ -365,6 +393,128 @@ export default function LandingPage({ onStart }) {
               </button>
             ))}
           </div>
+        </div>
+
+        {/* Witnesses section */}
+        <div style={{ marginTop: '1.5rem' }}>
+          <div style={{ fontSize: '10px', letterSpacing: '0.3em', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.75rem' }}>
+            Witnesses
+          </div>
+
+          {!witnessConfig.enabled ? (
+            <button
+              onClick={() => setWitnessConfig(prev => ({ ...prev, enabled: true }))}
+              style={{
+                width: '100%',
+                padding: '0.75rem',
+                background: 'var(--bg)',
+                border: '1px solid var(--border)',
+                color: 'var(--text-muted)',
+                fontFamily: 'Georgia, serif',
+                fontSize: '12px',
+                fontStyle: 'italic',
+                cursor: 'pointer',
+                textAlign: 'left',
+                transition: 'background 0.15s',
+              }}
+              onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-secondary)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'var(--bg)'}
+            >
+              + Add witnesses to this trial
+            </button>
+          ) : (
+            <div style={{ border: '1px solid var(--border)' }}>
+              {/* Header */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', borderBottom: '1px solid var(--border)' }}>
+                <span style={{ fontSize: '12px', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-muted)' }}>Witnesses enabled</span>
+                <button
+                  onClick={() => { setWitnessConfig({ enabled: false, prosecutionCount: 2, defenseWitnesses: [] }); setGeneratedWitnesses([]) }}
+                  style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '12px', cursor: 'pointer', fontFamily: 'Georgia, serif' }}
+                >
+                  Remove
+                </button>
+              </div>
+
+              {/* Prosecution count */}
+              <div style={{ padding: '0.75rem 1rem', borderBottom: '1px solid var(--border)' }}>
+                <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
+                  Prosecution witnesses (Reginald calls against you)
+                </div>
+                <div style={{ display: 'flex', gap: '6px' }}>
+                  {[1, 2, 3].map(n => (
+                    <button
+                      key={n}
+                      onClick={() => setWitnessConfig(prev => ({ ...prev, prosecutionCount: n }))}
+                      style={{
+                        flex: 1, padding: '0.4rem',
+                        background: witnessConfig.prosecutionCount === n ? 'var(--accent)' : 'var(--bg)',
+                        color: witnessConfig.prosecutionCount === n ? 'var(--accent-text)' : 'var(--text)',
+                        border: '1px solid var(--border)',
+                        fontFamily: 'Georgia, serif', fontSize: '13px', cursor: 'pointer',
+                        transition: 'background 0.15s, color 0.15s',
+                      }}
+                    >
+                      {n}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Defense witnesses */}
+              <div style={{ padding: '0.75rem 1rem' }}>
+                <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '0.75rem' }}>
+                  Your character witnesses (choose up to 2)
+                </div>
+
+                {generatedWitnesses.length === 0 ? (
+                  <button
+                    onClick={handleGenerateWitnesses}
+                    disabled={!activeAccusation || generatingWitnesses}
+                    style={{
+                      width: '100%', padding: '0.6rem',
+                      background: activeAccusation && !generatingWitnesses ? 'var(--bg-card)' : 'var(--bg-secondary)',
+                      border: '1px solid var(--border)',
+                      color: activeAccusation ? 'var(--text)' : 'var(--text-muted)',
+                      fontFamily: 'Georgia, serif', fontSize: '12px', fontStyle: 'italic',
+                      cursor: activeAccusation && !generatingWitnesses ? 'pointer' : 'not-allowed',
+                    }}
+                  >
+                    {generatingWitnesses ? 'Generating witnesses...' : !activeAccusation ? 'Select a charge first' : 'Generate witnesses for this charge'}
+                  </button>
+                ) : (
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1px', background: 'var(--border)' }}>
+                    {generatedWitnesses.map(w => {
+                      const selected = witnessConfig.defenseWitnesses.find(s => s.id === w.id)
+                      return (
+                        <button
+                          key={w.id}
+                          onClick={() => toggleWitness(w)}
+                          style={{
+                            padding: '0.75rem',
+                            background: selected ? 'var(--accent)' : 'var(--bg-card)',
+                            color: selected ? 'var(--accent-text)' : 'var(--text)',
+                            border: 'none', textAlign: 'left', cursor: 'pointer',
+                            fontFamily: 'Georgia, serif',
+                            transition: 'background 0.15s, color 0.15s',
+                          }}
+                        >
+                          <div style={{ fontSize: '12px', fontWeight: 600, marginBottom: '2px' }}>{w.name}</div>
+                          <div style={{ fontSize: '10px', opacity: 0.75, fontStyle: 'italic', lineHeight: 1.3 }}>{w.title}</div>
+                          <div style={{ fontSize: '10px', opacity: 0.6, marginTop: '4px', lineHeight: 1.3 }}>{w.summary}</div>
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
+
+                {witnessConfig.defenseWitnesses.length > 0 && (
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '6px', fontStyle: 'italic' }}>
+                    {witnessConfig.defenseWitnesses.length} witness{witnessConfig.defenseWitnesses.length > 1 ? 'es' : ''} selected
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Start button */}

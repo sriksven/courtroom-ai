@@ -1,6 +1,6 @@
 import { useReducer, useCallback, useRef } from 'react'
 import { v4 as uuidv4 } from 'uuid'
-import { PHASES, DEFAULT_ROUNDS, DYNAMIC_HARD_CAP, COURT_INTERVENTION_ROUND, buildPhaseOrder, buildPhaseTransitions } from '../constants/phases.js'
+import { PHASES, DEFAULT_ROUNDS, DYNAMIC_HARD_CAP, COURT_INTERVENTION_ROUND, buildPhaseOrder, buildPhaseTransitions, buildPhaseOrderWithWitnesses, buildPhaseTransitionsWithWitnesses } from '../constants/phases.js'
 import { buildFullTranscript } from '../utils/transcriptManager.js'
 
 export const MAX_HINTS = 3
@@ -33,6 +33,10 @@ const initialState = {
   hintsUsed: 0,
   isLoading: false,
   error: null,
+  witnessConfig: null,
+  prosecutionWitnessProfiles: [],
+  witnessQuestionsAsked: 0,
+  defenseWitnessesUsed: 0,
 }
 
 function reducer(state, action) {
@@ -51,6 +55,10 @@ function reducer(state, action) {
         hintsUsed: 0,
         interventionDelivered: false,
         roundsAfterIntervention: 0,
+        witnessConfig: action.payload.witnessConfig ?? null,
+        prosecutionWitnessProfiles: [],
+        witnessQuestionsAsked: 0,
+        defenseWitnessesUsed: 0,
       }
 
     case 'USE_HINT':
@@ -119,6 +127,18 @@ function reducer(state, action) {
 
     case 'SET_ERROR':
       return { ...state, error: action.payload }
+
+    case 'ADD_PROSECUTION_WITNESS': {
+      const profiles = [...state.prosecutionWitnessProfiles]
+      profiles[action.payload.witnessNum - 1] = action.payload.profile
+      return { ...state, prosecutionWitnessProfiles: profiles, witnessQuestionsAsked: 0 }
+    }
+    case 'ADVANCE_WITNESS_QUESTION':
+      return { ...state, witnessQuestionsAsked: state.witnessQuestionsAsked + 1 }
+    case 'RESET_WITNESS_QUESTIONS':
+      return { ...state, witnessQuestionsAsked: 0 }
+    case 'USE_DEFENSE_WITNESS':
+      return { ...state, defenseWitnessesUsed: state.defenseWitnessesUsed + 1 }
 
     case 'RESET':
       return { ...initialState }
@@ -289,16 +309,16 @@ export function useTrial() {
   }
 
   // ── startTrial ───────────────────────────────────────────────────
-  const startTrial = useCallback(async (accusation, rounds = DEFAULT_ROUNDS, difficulty = 'normal') => {
+  const startTrial = useCallback(async (accusation, rounds = DEFAULT_ROUNDS, difficulty = 'normal', witnessConfig = null) => {
     trialIdRef.current = uuidv4()
     const isDynamic = rounds === 'dynamic'
     const numRounds = isDynamic ? DEFAULT_ROUNDS : rounds
-    const phaseOrder = buildPhaseOrder(numRounds)
-    const transitions = buildPhaseTransitions(numRounds)
+    const phaseOrder = buildPhaseOrderWithWitnesses(numRounds, witnessConfig)
+    const transitions = buildPhaseTransitionsWithWitnesses(numRounds, witnessConfig)
 
     dispatch({
       type: 'START_TRIAL',
-      payload: { accusation, rounds, isDynamic, difficulty, phaseOrder, transitions },
+      payload: { accusation, rounds, isDynamic, difficulty, phaseOrder, transitions, witnessConfig },
     })
     dispatch({ type: 'SET_LOADING', payload: true })
     dispatch({ type: 'SET_ERROR', payload: null })
@@ -334,6 +354,56 @@ export function useTrial() {
     dispatch({ type: 'ADD_MESSAGE', payload: defenseMsg })
 
     const updatedMessages = [...state.messages, defenseMsg]
+
+    // ── PROSECUTION_WITNESS phase: user cross-examines prosecution witness ──
+    if (currentPhase.startsWith('PROSECUTION_WITNESS_')) {
+      dispatch({ type: 'SET_LOADING', payload: true })
+      dispatch({ type: 'SET_ERROR', payload: null })
+      try {
+        const witnessNum = parseInt(currentPhase.replace('PROSECUTION_WITNESS_', ''))
+        const witnessProfile = state.prosecutionWitnessProfiles[witnessNum - 1]
+
+        const responseData = await apiPost('/api/witness-response', {
+          witness: witnessProfile,
+          question: text,
+          side: 'prosecution',
+          accusation: state.accusation,
+          questionsAsked: state.witnessQuestionsAsked,
+        })
+
+        dispatch({ type: 'ADD_MESSAGE', payload: {
+          id: uuidv4(), role: 'prosecution_witness', content: responseData.response,
+          witnessProfile, timestamp: Date.now(), phase: currentPhase,
+        }})
+        dispatch({ type: 'ADVANCE_WITNESS_QUESTION' })
+
+        const newQCount = state.witnessQuestionsAsked + 1
+        if (newQCount >= 2) {
+          const next = state.transitions[currentPhase]
+          dispatch({ type: 'ADVANCE_PHASE' })
+          dispatch({ type: 'RESET_WITNESS_QUESTIONS' })
+
+          if (next?.phase.startsWith('CROSS_')) {
+            const msgId = uuidv4()
+            dispatch({ type: 'ADD_MESSAGE', payload: { id: msgId, role: 'prosecutor', content: '', timestamp: Date.now(), phase: next.phase, round: next.round } })
+            await callProsecutor(state.accusation, next.phase, updatedMessages, '', next.round, false, (partial) => {
+              dispatch({ type: 'UPDATE_MESSAGE', payload: { id: msgId, content: partial } })
+            }, difficulty)
+          } else if (next?.phase === 'CLOSING') {
+            const closingId = uuidv4()
+            dispatch({ type: 'ADD_MESSAGE', payload: { id: closingId, role: 'prosecutor', content: '', timestamp: Date.now(), phase: 'CLOSING', round: 0 } })
+            await callProsecutor(state.accusation, 'CLOSING', updatedMessages, '', 0, false, (partial) => {
+              dispatch({ type: 'UPDATE_MESSAGE', payload: { id: closingId, content: partial } })
+            }, difficulty)
+          }
+        }
+      } catch (err) {
+        dispatch({ type: 'SET_ERROR', payload: err.message })
+      } finally {
+        dispatch({ type: 'SET_LOADING', payload: false })
+      }
+      return
+    }
 
     // ── CLOSING → VERDICT ──────────────────────────────────────────
     if (currentPhase === 'CLOSING') {
@@ -465,6 +535,40 @@ export function useTrial() {
         return
       }
 
+      if (next.phase.startsWith('PROSECUTION_WITNESS_')) {
+        try {
+          const witnessNum = parseInt(next.phase.replace('PROSECUTION_WITNESS_', ''))
+
+          const genData = await apiPost('/api/generate-witnesses', {
+            accusation: state.accusation, side: 'prosecution', count: 1,
+          })
+          const profile = genData.witnesses[0]
+
+          dispatch({ type: 'ADD_MESSAGE', payload: {
+            id: uuidv4(), role: 'prosecutor',
+            content: `The prosecution calls ${profile.name}. ${profile.title}. Please take the stand.`,
+            timestamp: Date.now(), phase: next.phase, round: currentRound,
+          }})
+
+          const testimonyData = await apiPost('/api/witness-testimony', {
+            witness: profile, side: 'prosecution', accusation: state.accusation,
+          })
+
+          dispatch({ type: 'ADD_MESSAGE', payload: {
+            id: uuidv4(), role: 'prosecution_witness', content: testimonyData.testimony,
+            witnessProfile: profile, timestamp: Date.now(), phase: next.phase,
+          }})
+
+          dispatch({ type: 'ADD_PROSECUTION_WITNESS', payload: { witnessNum, profile } })
+          dispatch({ type: 'ADVANCE_PHASE' })
+        } catch (err) {
+          dispatch({ type: 'SET_ERROR', payload: err.message })
+        } finally {
+          dispatch({ type: 'SET_LOADING', payload: false })
+        }
+        return
+      }
+
       // Dynamic OPENING: first cross uses dynamic mode so prosecutor can decide after round 1
       const isOpeningDynamic = isDynamic && currentPhase === 'OPENING'
       const msgId = uuidv4()
@@ -532,6 +636,57 @@ export function useTrial() {
     }
   }, [state.messages, state.accusation])
 
+  const callDefenseWitness = useCallback(async () => {
+    const config = state.witnessConfig
+    const witnessIdx = state.defenseWitnessesUsed
+    if (!config?.enabled || witnessIdx >= (config.defenseWitnesses?.length ?? 0)) return
+
+    const profile = config.defenseWitnesses[witnessIdx]
+    const currentPhase = state.phase
+    const difficulty = state.difficulty
+
+    dispatch({ type: 'SET_LOADING', payload: true })
+    dispatch({ type: 'SET_ERROR', payload: null })
+    dispatch({ type: 'USE_DEFENSE_WITNESS' })
+
+    try {
+      const testimonyData = await apiPost('/api/witness-testimony', {
+        witness: profile, side: 'defense', accusation: state.accusation,
+      })
+
+      dispatch({ type: 'ADD_MESSAGE', payload: {
+        id: uuidv4(), role: 'defense_witness', content: testimonyData.testimony,
+        witnessProfile: profile, timestamp: Date.now(), phase: currentPhase,
+      }})
+
+      for (let q = 1; q <= 2; q++) {
+        const crossData = await apiPost('/api/witness-cross', {
+          witness: profile, accusation: state.accusation,
+          questionNumber: q, testimony: testimonyData.testimony,
+        })
+
+        dispatch({ type: 'ADD_MESSAGE', payload: {
+          id: uuidv4(), role: 'prosecutor', content: crossData.question,
+          timestamp: Date.now(), phase: currentPhase,
+        }})
+
+        const respData = await apiPost('/api/witness-response', {
+          witness: profile, question: crossData.question,
+          side: 'defense', accusation: state.accusation, questionsAsked: q - 1,
+        })
+
+        dispatch({ type: 'ADD_MESSAGE', payload: {
+          id: uuidv4(), role: 'defense_witness', content: respData.response,
+          witnessProfile: profile, timestamp: Date.now(), phase: currentPhase,
+        }})
+      }
+    } catch (err) {
+      dispatch({ type: 'SET_ERROR', payload: err.message })
+    } finally {
+      dispatch({ type: 'SET_LOADING', payload: false })
+    }
+  }, [state.witnessConfig, state.defenseWitnessesUsed, state.accusation, state.phase, state.difficulty, state.messages])
+
   const resetTrial = useCallback(() => dispatch({ type: 'RESET' }), [])
 
   return {
@@ -555,7 +710,12 @@ export function useTrial() {
     startTrial,
     submitDefense,
     requestHint,
+    callDefenseWitness,
     resetTrial,
     setRoom,
+    witnessConfig: state.witnessConfig,
+    prosecutionWitnessProfiles: state.prosecutionWitnessProfiles,
+    witnessQuestionsAsked: state.witnessQuestionsAsked,
+    defenseWitnessesUsed: state.defenseWitnessesUsed,
   }
 }

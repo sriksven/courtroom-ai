@@ -5,7 +5,7 @@ import { PHASES } from '../../constants/phases.js'
 
 import { MAX_HINTS } from '../../hooks/useTrial.js'
 
-export default function TrialInputBar() {
+export default function TrialInputBar({ isWitnessPhase = false, witnessQuestionsLeft = 2 }) {
   const { phase, isLoading, error, submitDefense, requestHint, hintsUsed } = useTrialContext()
   const [inputText, setInputText] = useState('')
   const [hintText, setHintText] = useState(null)
@@ -94,7 +94,11 @@ export default function TrialInputBar() {
           onChange={e => setInputText(e.target.value)}
           onKeyDown={handleKeyDown}
           disabled={isLoading}
-          placeholder={isClosing ? 'Deliver your closing argument...' : 'Type your defense here...'}
+          placeholder={
+            isWitnessPhase ? `Cross-examine the witness (${witnessQuestionsLeft} question${witnessQuestionsLeft !== 1 ? 's' : ''} remaining)...` :
+            isClosing ? 'Deliver your closing argument...' :
+            'Type your defense here...'
+          }
           rows={3}
           style={{
             flex: 1,
@@ -145,7 +149,7 @@ export default function TrialInputBar() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <button
           onClick={handleHint}
-          disabled={isLoading || hintLoading || isClosing || hintsLeft <= 0}
+          disabled={isLoading || hintLoading || isClosing || isWitnessPhase || hintsLeft <= 0}
           style={{
             background: 'none',
             border: 'none',
@@ -153,9 +157,9 @@ export default function TrialInputBar() {
             fontFamily: 'Georgia, serif',
             fontSize: '12px',
             fontStyle: 'italic',
-            cursor: (isClosing || hintsLeft <= 0) ? 'default' : 'pointer',
+            cursor: (isClosing || isWitnessPhase || hintsLeft <= 0) ? 'default' : 'pointer',
             padding: 0,
-            opacity: isLoading || hintLoading || isClosing || hintsLeft <= 0 ? 0.4 : 1,
+            opacity: isLoading || hintLoading || isClosing || isWitnessPhase || hintsLeft <= 0 ? 0.4 : 1,
             display: 'flex',
             alignItems: 'center',
             gap: '4px',
@@ -180,7 +184,7 @@ export default function TrialInputBar() {
             transition: 'all 0.2s',
           }}
         >
-          {isClosing ? 'Closing Argument' : 'Submit Defense'}
+          {isClosing ? 'Closing Argument' : isWitnessPhase ? 'Cross-Examine' : 'Submit Defense'}
         </button>
       </div>
 

@@ -31,7 +31,7 @@ function getLoadingMessage(phase) {
 
 // voiceModeOn: 'off' | 'hybrid' | 'full'
 export default function TrialPage({ onVerdict, onBack, voiceModeOn, onVoiceModeChange, theme, onToggleTheme }) {
-  const { messages, isLoading, phase, round, rounds, isDynamic, phaseOrder, accusation, submitDefense, verdict, interventionDelivered, roundsAfterIntervention } = useTrialContext()
+  const { messages, isLoading, phase, round, rounds, isDynamic, phaseOrder, accusation, submitDefense, verdict, interventionDelivered, roundsAfterIntervention, witnessConfig, witnessQuestionsAsked, defenseWitnessesUsed, callDefenseWitness } = useTrialContext()
   const timer = useTrialTimer()
 
   // Voice input for hybrid mode (STT only — TTS is manual via play buttons)
@@ -67,6 +67,7 @@ export default function TrialPage({ onVerdict, onBack, voiceModeOn, onVoiceModeC
   }, [phase])
 
   const isCross = phase?.startsWith('CROSS_')
+  const isWitnessPhase = phase?.startsWith('PROSECUTION_WITNESS_')
   const phaseLabel = getPhaseLabelDynamic(phase, round)
   const progress = getProgress(phase, phaseOrder)
 
@@ -214,7 +215,33 @@ export default function TrialPage({ onVerdict, onBack, voiceModeOn, onVoiceModeC
       {/* Bottom bar */}
       {phase !== PHASES.VERDICT && (
         <>
-          {voiceModeOn === 'off' && <TrialInputBar />}
+          {voiceModeOn === 'off' && witnessConfig?.enabled &&
+            defenseWitnessesUsed < (witnessConfig.defenseWitnesses?.length ?? 0) &&
+            phase?.startsWith('CROSS_') && !isLoading && (
+            <div style={{ borderTop: '1px solid var(--border)', background: 'var(--bg)', flexShrink: 0 }}>
+              <div style={{ maxWidth: '720px', margin: '0 auto', padding: '0.5rem 1.25rem' }}>
+                <button
+                  onClick={callDefenseWitness}
+                  style={{
+                    background: 'none',
+                    border: '1px solid var(--border)',
+                    color: 'var(--text-muted)',
+                    fontFamily: 'Georgia, serif',
+                    fontSize: '12px',
+                    fontStyle: 'italic',
+                    padding: '0.4rem 0.85rem',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--text)'; e.currentTarget.style.color = 'var(--text)' }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-muted)' }}
+                >
+                  📋 Call {witnessConfig.defenseWitnesses[defenseWitnessesUsed]?.name} to the stand
+                </button>
+              </div>
+            </div>
+          )}
+          {voiceModeOn === 'off' && <TrialInputBar isWitnessPhase={isWitnessPhase} witnessQuestionsLeft={Math.max(0, 2 - witnessQuestionsAsked)} />}
           {voiceModeOn === 'hybrid' && (
             <VoiceStatus
               state={hybridVoice.state}

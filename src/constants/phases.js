@@ -30,6 +30,36 @@ export function buildPhaseTransitions(rounds) {
   return map
 }
 
+export function buildPhaseOrderWithWitnesses(rounds, witnessConfig) {
+  if (!witnessConfig?.enabled) return buildPhaseOrder(rounds)
+  const numPros = Math.min(witnessConfig.prosecutionCount || 0, rounds)
+  const phases = ['SETUP', 'OPENING']
+  for (let i = 1; i <= rounds; i++) {
+    phases.push(`CROSS_${i}`)
+    if (i <= numPros) phases.push(`PROSECUTION_WITNESS_${i}`)
+  }
+  phases.push('CLOSING', 'VERDICT')
+  return phases
+}
+
+export function buildPhaseTransitionsWithWitnesses(rounds, witnessConfig) {
+  if (!witnessConfig?.enabled) return buildPhaseTransitions(rounds)
+  const numPros = Math.min(witnessConfig.prosecutionCount || 0, rounds)
+  const map = {}
+  map['OPENING'] = { phase: 'CROSS_1', round: 1 }
+  for (let i = 1; i <= rounds; i++) {
+    if (i <= numPros) {
+      map[`CROSS_${i}`] = { phase: `PROSECUTION_WITNESS_${i}`, round: i }
+      const afterWitness = i < rounds ? { phase: `CROSS_${i + 1}`, round: i + 1 } : { phase: 'CLOSING', round: 0 }
+      map[`PROSECUTION_WITNESS_${i}`] = afterWitness
+    } else {
+      map[`CROSS_${i}`] = i < rounds ? { phase: `CROSS_${i + 1}`, round: i + 1 } : { phase: 'CLOSING', round: 0 }
+    }
+  }
+  map['CLOSING'] = { phase: 'VERDICT', round: 0 }
+  return map
+}
+
 export function getProgress(phase, phaseOrder) {
   const idx = phaseOrder.indexOf(phase)
   if (idx <= 0) return 0
