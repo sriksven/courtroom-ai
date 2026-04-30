@@ -1,0 +1,155 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Run unit tests
+        run: npm run test:once
+
+      - name: Upload coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage/
+          retention-days: 7
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+          retention-days: 3
+
+  lint-api:
+    name: API Syntax Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Check API files parse without errors
+        run: |
+          for f in api/*.js; do
+            echo "Checking $f"
+            node --input-type=module < "$f" 2>/dev/null || node -e "import('$(pwd)/$f').catch(e => { if (!e.message.includes('Cannot find')) { console.error('Syntax error in $f:', e.message); process.exit(1); } })"
+          done
+
+  smoke:
+    name: Smoke Tests
+    runs-on: ubuntu-latest
+    needs: [test, build]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Verify phase machine integrity
+        run: |
+          node --input-type=module <<'EOF'
+          import { buildPhaseOrder, buildPhaseTransitions, DYNAMIC_HARD_CAP } from './src/constants/phases.js'
+
+          // All round counts produce valid phase orders
+          for (let r = 1; r <= 5; r++) {
+            const order = buildPhaseOrder(r)
+            const transitions = buildPhaseTransitions(r)
+            if (order[0] !== 'SETUP') throw new Error(`Round ${r}: SETUP missing`)
+            if (order[order.length - 1] !== 'VERDICT') throw new Error(`Round ${r}: VERDICT missing`)
+            if (!order.includes(`CROSS_${r}`)) throw new Error(`Round ${r}: CROSS_${r} missing`)
+            if (order.includes(`CROSS_${r + 1}`)) throw new Error(`Round ${r}: unexpected extra cross phase`)
+            // All transitions resolve
+            let phase = 'OPENING'
+            let steps = 0
+            while (phase !== 'CLOSING' && steps < 20) {
+              const next = transitions[phase]
+              if (!next) throw new Error(`Round ${r}: dead end at ${phase}`)
+              phase = next.phase
+              steps++
+            }
+          }
+
+          // Dynamic hard cap is sane
+          if (DYNAMIC_HARD_CAP < 5) throw new Error('DYNAMIC_HARD_CAP too low')
+
+          console.log('Phase machine: OK')
+          EOF
+
+      - name: Verify cases data integrity
+        run: |
+          node --input-type=module <<'EOF'
+          import CASES from './src/constants/cases.js'
+
+          const ids = new Set()
+          for (const c of CASES) {
+            if (!c.id) throw new Error('Case missing id')
+            if (!c.title) throw new Error(`Case ${c.id} missing title`)
+            if (!c.subtitle) throw new Error(`Case ${c.id} missing subtitle`)
+            if (!c.accusation || c.accusation.length < 20) throw new Error(`Case ${c.id} accusation too short`)
+            if (ids.has(c.id)) throw new Error(`Duplicate case id: ${c.id}`)
+            ids.add(c.id)
+          }
+          if (CASES.length < 5) throw new Error('Too few cases')
+
+          console.log(`Cases: ${CASES.length} valid cases OK`)
+          EOF
+
+      - name: Verify API handlers export a default function
+        run: |
+          node --input-type=module <<'EOF'
+          import prosecutor from './api/prosecutor.js'
+          import judge from './api/judge.js'
+          import hint from './api/defense-hint.js'
+
+          if (typeof prosecutor !== 'function') throw new Error('prosecutor.js: default export is not a function')
+          if (typeof judge !== 'function') throw new Error('judge.js: default export is not a function')
+          if (typeof hint !== 'function') throw new Error('defense-hint.js: default export is not a function')
+
+          console.log('API handlers: OK')
+          EOF
+        env:
+          GROQ_API_KEY: smoke-test-placeholder
+          OPENAI_API_KEY: smoke-test-placeholder
