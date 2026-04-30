@@ -9,7 +9,7 @@ export default function HintButton({ onRequestHint, isLoading, disabled }) {
       {isLoading ? (
         <span className="w-4 h-4 border border-[#C9A84C]/60 border-t-transparent rounded-full animate-spin inline-block" />
       ) : (
-        <span>💡</span>
+        <span>?</span>
       )}
       Get a Hint
     </button>

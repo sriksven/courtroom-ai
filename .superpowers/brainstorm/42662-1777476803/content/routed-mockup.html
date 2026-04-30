@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>All Rise</title>
+<style>
+:root {
+  --bg:#ffffff; --bg2:#f8f8f6; --bg3:#f1f1ef; --bg4:#e8e8e6;
+  --border:#ebebeb; --border2:#d8d8d8;
+  --text:#0f0f0f; --text2:#666; --text3:#aaa;
+  --ink:#0f0f0f; --ink-inv:#ffffff;
+  --pro-bg:#f6f6f6; --def-bg:#fff;
+  --t:all 0.35s cubic-bezier(.4,0,.2,1);
+}
+[data-theme="dark"] {
+  --bg:#0a0a0a; --bg2:#111; --bg3:#181818; --bg4:#222;
+  --border:#1e1e1e; --border2:#2a2a2a;
+  --text:#f0f0ee; --text2:#777; --text3:#444;
+  --ink:#f0f0ee; --ink-inv:#0a0a0a;
+  --pro-bg:#141414; --def-bg:#0f0f0f;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;width:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;background:var(--bg);color:var(--text);transition:background .35s,color .35s}
+
+/* ── ROUTER ── */
+.page{position:fixed;inset:0;display:flex;flex-direction:column;background:var(--bg);transition:opacity .45s cubic-bezier(.4,0,.2,1),transform .45s cubic-bezier(.4,0,.2,1);will-change:opacity,transform}
+.page.out-left{opacity:0;transform:translateX(-32px);pointer-events:none}
+.page.out-right{opacity:0;transform:translateX(32px);pointer-events:none}
+.page.in{opacity:1;transform:translateX(0)}
+.page.hidden{display:none}
+
+/* ── NAV ── */
+.nav{height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 40px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--bg);transition:var(--t);z-index:20;position:relative}
+.nav-logo{font-size:12px;letter-spacing:5px;text-transform:uppercase;font-weight:500;color:var(--text);cursor:pointer;transition:var(--t)}
+.nav-logo:hover{opacity:.6}
+.nav-center{position:absolute;left:50%;transform:translateX(-50%);font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--text3);transition:var(--t)}
+.nav-right{display:flex;align-items:center;gap:12px}
+.dot-live{width:5px;height:5px;border-radius:50%;background:var(--text);animation:pulse 2s ease-in-out infinite;transition:var(--t)}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.7)}}
+.nav-txt{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);transition:var(--t)}
+.btn-theme{background:none;border:1px solid var(--border2);color:var(--text2);cursor:pointer;font-size:9px;letter-spacing:2px;text-transform:uppercase;padding:5px 12px;border-radius:2px;font-family:inherit;transition:var(--t)}
+.btn-theme:hover{border-color:var(--text);color:var(--text)}
+
+/* ════ PAGE 1: LANDING ════ */
+#page-landing .body{flex:1;overflow-y:auto;overflow-x:hidden;scroll-behavior:smooth}
+#page-landing .body::-webkit-scrollbar{width:3px}
+#page-landing .body::-webkit-scrollbar-thumb{background:var(--border2)}
+
+.hero{min-height:calc(100vh - 52px);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 40px 100px;text-align:center;position:relative;flex-shrink:0}
+.hero-over{font-size:10px;letter-spacing:5px;text-transform:uppercase;color:var(--text3);margin-bottom:20px;animation:up .6s .05s both}
+.hero-h{font-size:clamp(56px,10vw,120px);font-weight:300;letter-spacing:-4px;line-height:.9;color:var(--text);margin-bottom:28px;animation:up .6s .12s both}
+.hero-sub{font-size:15px;color:var(--text2);max-width:400px;line-height:1.65;margin-bottom:44px;animation:up .6s .2s both}
+.hero-btns{display:flex;gap:10px;animation:up .6s .28s both}
+.btn-p{background:var(--ink);color:var(--ink-inv);border:1px solid var(--ink);padding:13px 36px;font-size:10px;letter-spacing:3px;text-transform:uppercase;cursor:pointer;font-family:inherit;border-radius:2px;transition:var(--t)}
+.btn-p:hover{opacity:.75}
+.btn-g{background:none;color:var(--text2);border:1px solid var(--border2);padding:13px 24px;font-size:10px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;font-family:inherit;border-radius:2px;transition:var(--t)}
+.btn-g:hover{border-color:var(--text);color:var(--text)}
+.scroll-cue{position:absolute;bottom:36px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:8px;font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--text3);animation:up .6s .5s both;cursor:pointer}
+.scroll-arr{animation:bob 1.6s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(6px)}}
+@keyframes up{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+
+/* Cases section */
+.cases-wrap{padding:80px 40px 100px;border-top:1px solid var(--border);background:var(--bg);transition:var(--t);flex-shrink:0}
+.sec-hd{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:28px}
+.sec-lbl{font-size:10px;letter-spacing:4px;text-transform:uppercase;color:var(--text3);transition:var(--t)}
+.sec-ct{font-size:11px;color:var(--text3);transition:var(--t)}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:1px solid var(--border);background:var(--border)}
+.cc{background:var(--bg);padding:22px 20px;cursor:pointer;transition:background .15s;display:flex;flex-direction:column;gap:8px;border:0;min-height:110px;position:relative}
+.cc:hover{background:var(--bg3)}
+.cc.sel{background:var(--ink)}
+.cc.sel .cn,.cc.sel .ct{color:rgba(255,255,255,.9)}
+.cc.sel .ck{opacity:1}
+.cn{font-size:8px;letter-spacing:3px;font-family:'Courier New',monospace;color:var(--text3);transition:var(--t)}
+.ct{font-size:12px;line-height:1.5;color:var(--text);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;transition:var(--t)}
+.ck{position:absolute;top:10px;right:12px;font-size:10px;opacity:0;color:#fff;transition:opacity .2s}
+.or-row{display:flex;align-items:center;gap:0;margin-top:0;border:1px solid var(--border);border-top:none}
+.or-lbl{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--text3);padding:18px 20px;background:var(--bg2);flex-shrink:0;border-right:1px solid var(--border);white-space:nowrap;transition:var(--t)}
+.cf{flex:1;border:none;background:transparent;color:var(--text);font-family:inherit;font-size:13px;padding:18px 20px;outline:none;transition:color .35s}
+.cf::placeholder{color:var(--text3)}
+.foot-row{display:flex;justify-content:space-between;align-items:center;margin-top:28px}
+.sel-lbl{font-size:12px;color:var(--text2);font-style:italic;transition:var(--t)}
+.btn-enter{background:var(--ink);color:var(--ink-inv);border:1px solid var(--ink);padding:13px 40px;font-size:10px;letter-spacing:3px;text-transform:uppercase;cursor:pointer;font-family:inherit;border-radius:2px;transition:var(--t)}
+.btn-enter:disabled{opacity:.3;cursor:not-allowed}
+.btn-enter:not(:disabled):hover{opacity:.75}
+
+/* ════ PAGE 2: TRIAL ════ */
+#page-trial{background:var(--bg)}
+.trial-body{flex:1;display:grid;grid-template-rows:auto 1fr auto;overflow:hidden}
+
+.charge-hd{padding:20px 40px;border-bottom:1px solid var(--border);background:var(--bg);flex-shrink:0;transition:var(--t)}
+.ch-over{font-size:9px;letter-spacing:4px;text-transform:uppercase;color:var(--text3);margin-bottom:6px;transition:var(--t)}
+.ch-text{font-size:16px;color:var(--text);line-height:1.4;font-weight:400;transition:var(--t)}
+.ch-meta{display:flex;align-items:center;gap:14px;margin-top:12px}
+.ch-pill{display:inline-flex;align-items:center;gap:6px;background:var(--bg3);border:1px solid var(--border);padding:4px 11px;border-radius:2px;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text2);transition:var(--t)}
+.ch-pdot{width:4px;height:4px;border-radius:50%;background:var(--text);transition:var(--t)}
+.ch-rnd{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);transition:var(--t)}
+.prog-wrap{margin-top:12px;height:1.5px;background:var(--border);transition:var(--t)}
+.prog-bar{height:100%;background:var(--text);transition:width .8s cubic-bezier(.4,0,.2,1),background .35s;width:12%}
+
+.chat-scroll{overflow-y:auto;padding:36px 40px;display:flex;flex-direction:column;gap:22px;scroll-behavior:smooth}
+.chat-scroll::-webkit-scrollbar{width:3px}
+.chat-scroll::-webkit-scrollbar-thumb{background:var(--border2)}
+
+.msg{display:flex;gap:14px;align-items:flex-start}
+.msg.def{flex-direction:row-reverse}
+.msg{animation:min .4s cubic-bezier(.4,0,.2,1) both}
+@keyframes min{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.av{width:30px;height:30px;border-radius:2px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:8px;letter-spacing:1px;font-weight:600;border:1px solid var(--border);background:var(--bg3);color:var(--text2);transition:var(--t)}
+.av.me{background:var(--ink);color:var(--ink-inv);border-color:var(--ink)}
+.mc{max-width:580px}
+.ml{font-size:8px;letter-spacing:2.5px;text-transform:uppercase;color:var(--text3);margin-bottom:5px;transition:var(--t)}
+.def .ml{text-align:right}
+.bub{padding:14px 18px;font-size:14px;line-height:1.65;color:var(--text);border-radius:2px;transition:var(--t)}
+.bub.pro{background:var(--pro-bg);border:1px solid var(--border);border-left:2px solid var(--border2)}
+.bub.me{background:var(--def-bg);border:1px solid var(--border);border-right:2px solid var(--border2);text-align:right}
+.typing-row{display:flex;align-items:center;gap:5px;padding:12px 16px;background:var(--bg3);border:1px solid var(--border);width:fit-content;border-radius:2px;animation:min .3s both}
+.td{width:5px;height:5px;border-radius:50%;background:var(--text3);animation:tdot 1.2s ease-in-out infinite;transition:var(--t)}
+.td:nth-child(2){animation-delay:.2s}.td:nth-child(3){animation-delay:.4s}
+@keyframes tdot{0%,80%,100%{transform:scale(1);opacity:.35}40%{transform:scale(1.4);opacity:1}}
+
+.input-foot{border-top:1px solid var(--border);padding:20px 40px;background:var(--bg);flex-shrink:0;transition:var(--t)}
+.hint-box{background:var(--bg3);border:1px solid var(--border);padding:10px 16px;margin-bottom:14px;font-size:12px;line-height:1.7;color:var(--text2);border-radius:2px;animation:min .3s both;transition:var(--t)}
+.hint-top{font-size:8px;letter-spacing:3px;text-transform:uppercase;color:var(--text3);margin-bottom:4px;display:block;transition:var(--t)}
+.input-row{display:flex;gap:10px;align-items:flex-end}
+textarea{flex:1;border:none;border-bottom:1.5px solid var(--border2);background:transparent;color:var(--text);font-family:inherit;font-size:14px;line-height:1.5;padding:4px 0 8px;outline:none;resize:none;transition:border-color .2s,color .35s}
+textarea::placeholder{color:var(--text3)}
+textarea:focus{border-color:var(--text)}
+.iacts{display:flex;gap:8px;align-items:center;flex-shrink:0}
+.ibtn{width:34px;height:34px;border:1px solid var(--border2);background:none;cursor:pointer;border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--text2);transition:var(--t)}
+.ibtn:hover{border-color:var(--text);color:var(--text)}
+.sbtn{background:var(--ink);color:var(--ink-inv);border:1px solid var(--ink);padding:0 22px;height:34px;cursor:pointer;font-size:10px;letter-spacing:2px;text-transform:uppercase;font-family:inherit;border-radius:2px;transition:var(--t)}
+.sbtn:hover{opacity:.75}
+
+/* ════ PAGE 3: VERDICT ════ */
+#page-verdict{background:var(--bg)}
+.verdict-body{flex:1;overflow-y:auto;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 40px;gap:24px}
+.v-over{font-size:9px;letter-spacing:5px;text-transform:uppercase;color:var(--text3);animation:up .5s .05s both}
+.v-ruling{font-size:clamp(44px,8vw,88px);font-weight:300;letter-spacing:-3px;color:var(--text);animation:up .5s .15s both;line-height:1;text-align:center}
+.v-rule{width:40px;height:1px;background:var(--border2);animation:up .5s .25s both}
+.v-stmt{font-size:14px;color:var(--text2);text-align:center;max-width:520px;line-height:1.75;font-style:italic;animation:up .5s .32s both}
+.v-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;width:100%;max-width:520px;background:var(--border);border:1px solid var(--border);animation:up .5s .42s both}
+.v-sc{background:var(--bg);padding:20px 12px;text-align:center;transition:var(--t)}
+.vsl{font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);margin-bottom:8px;transition:var(--t)}
+.vsn{font-size:28px;font-weight:300;color:var(--text);transition:var(--t)}
+.vsd{font-size:9px;color:var(--text3);transition:var(--t)}
+.v-fall{width:100%;max-width:520px;animation:up .5s .5s both}
+.v-fall-hd{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--text3);margin-bottom:10px}
+.fall-item{padding:10px 14px;border:1px solid var(--border);border-left:2px solid var(--border2);margin-bottom:8px;font-size:12px;color:var(--text2);line-height:1.5;transition:var(--t)}
+.btn-nc{background:var(--ink);color:var(--ink-inv);border:none;padding:12px 32px;font-size:10px;letter-spacing:3px;text-transform:uppercase;cursor:pointer;font-family:inherit;border-radius:2px;animation:up .5s .58s both;transition:var(--t)}
+.btn-nc:hover{opacity:.75}
+
+/* ── TOAST ── */
+.toast{position:fixed;top:64px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--ink-inv);padding:9px 22px;font-size:9px;letter-spacing:3px;text-transform:uppercase;z-index:9999;border-radius:2px;opacity:0;pointer-events:none;white-space:nowrap;transition:background .35s}
+.toast.show{animation:tpop 2.6s cubic-bezier(.4,0,.2,1) both}
+@keyframes tpop{0%{opacity:0;transform:translateX(-50%) translateY(-6px)}12%{opacity:1;transform:translateX(-50%) translateY(0)}80%{opacity:1}100%{opacity:0;transform:translateX(-50%) translateY(-4px)}}
+
+/* ── SIM BAR ── */
+.simbar{position:fixed;bottom:0;left:0;right:0;background:var(--bg2);border-top:1px solid var(--border);display:flex;gap:6px;padding:7px 16px;align-items:center;z-index:9000;transition:var(--t)}
+.sim-l{font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);margin-right:6px;flex-shrink:0}
+.simbtn{background:none;border:1px solid var(--border2);color:var(--text2);font-size:8px;letter-spacing:1px;text-transform:uppercase;padding:4px 10px;cursor:pointer;border-radius:2px;font-family:inherit;transition:var(--t)}
+.simbtn:hover{border-color:var(--text);color:var(--text)}
+.simbtn.route{border-color:var(--text2)}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════
+  PAGE 1 — LANDING
+══════════════════════════ -->
+<div class="page in" id="page-landing">
+  <nav class="nav">
+    <span class="nav-logo" onclick="navigate('landing')">⚖ All Rise</span>
+    <div class="nav-right">
+      <button class="btn-theme" onclick="toggleTheme()" id="themeBtn">◑ Dark</button>
+    </div>
+  </nav>
+  <div class="body" id="landingScroll">
+
+    <!-- HERO -->
+    <div class="hero" id="heroSection">
+      <div class="hero-over">A Courtroom of Questionable Justice</div>
+      <div class="hero-h">All<br>Rise.</div>
+      <div class="hero-sub">You stand accused. Three AI agents will prosecute, challenge, and judge your every word. The verdict is final.</div>
+      <div class="hero-btns">
+        <button class="btn-p" onclick="scrollToCases()">Select Your Charge</button>
+        <button class="btn-g" onclick="scrollToCases()">Browse Cases ↓</button>
+      </div>
+      <div class="scroll-cue" onclick="scrollToCases()">
+        <span>12 absurd charges await</span>
+        <span class="scroll-arr">↓</span>
+      </div>
+    </div>
+
+    <!-- CASES -->
+    <div class="cases-wrap" id="casesSection">
+      <div class="sec-hd">
+        <span class="sec-lbl">Select Your Charge</span>
+        <span class="sec-ct">12 cases available</span>
+      </div>
+      <div class="grid" id="casesGrid"></div>
+      <div class="or-row">
+        <span class="or-lbl">Or write your own</span>
+        <input class="cf" id="customInput" placeholder="The defendant stands accused of…" oninput="onCustom()"/>
+      </div>
+      <div class="foot-row">
+        <span class="sel-lbl" id="selLabel">No case selected</span>
+        <button class="btn-enter" id="enterBtn" disabled onclick="goTrial()">Enter the Courtroom →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════
+  PAGE 2 — TRIAL
+══════════════════════════ -->
+<div class="page out-right hidden" id="page-trial">
+  <nav class="nav">
+    <span class="nav-logo" onclick="navigate('landing')">⚖ All Rise</span>
+    <div class="nav-center" id="trialNavLabel">Cross-Examination · Round 2</div>
+    <div class="nav-right">
+      <div class="dot-live"></div>
+      <span class="nav-txt">Trial in session</span>
+      <button class="btn-theme" onclick="toggleTheme()">◑ Dark</button>
+    </div>
+  </nav>
+  <div class="trial-body">
+    <div class="charge-hd">
+      <div class="ch-over">You are accused of</div>
+      <div class="ch-text" id="trialChargeText">"Stealing the concept of Monday…"</div>
+      <div class="ch-meta">
+        <div class="ch-pill"><div class="ch-pdot"></div><span id="pillTxt">Opening Statement</span></div>
+        <span class="ch-rnd" id="rndTxt"></span>
+      </div>
+      <div class="prog-wrap"><div class="prog-bar" id="progBar"></div></div>
+    </div>
+    <div class="chat-scroll" id="chatArea"></div>
+    <div class="input-foot" id="inputFoot">
+      <div class="hint-box" id="hintBox" style="display:none">
+        <span class="hint-top">Strategic Counsel</span>
+        • Challenge "forensic chronology" — not an accredited field<br>
+        • Declining Monday dread is a positive outcome, not a crime<br>
+        • Burden of proof rests entirely with the prosecution
+      </div>
+      <div class="input-row">
+        <textarea id="defInput" placeholder="Deliver your defense…" rows="1" oninput="autoResize(this)"></textarea>
+        <div class="iacts">
+          <button class="ibtn" onclick="toggleHint()">💡</button>
+          <button class="ibtn">🎤</button>
+          <button class="sbtn" id="submitBtn">Submit →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════
+  PAGE 3 — VERDICT
+══════════════════════════ -->
+<div class="page out-right hidden" id="page-verdict">
+  <nav class="nav">
+    <span class="nav-logo" onclick="navigate('landing')">⚖ All Rise</span>
+    <div class="nav-center">Verdict</div>
+    <div class="nav-right">
+      <button class="btn-theme" onclick="toggleTheme()">◑ Dark</button>
+    </div>
+  </nav>
+  <div class="verdict-body">
+    <div class="v-over">The court finds the defendant</div>
+    <div class="v-ruling" id="verdictResult">NOT GUILTY</div>
+    <div class="v-rule"></div>
+    <div class="v-stmt" id="verdictStmt">"The defendant's employment at a lawful calendar establishment constitutes a complete alibi. The prosecution failed to establish criminal intent or demonstrate that the concept of Monday suffered any legally cognizable harm."</div>
+    <div class="v-grid">
+      <div class="v-sc"><div class="vsl">Strength</div><div class="vsn">8</div><div class="vsd">/10</div></div>
+      <div class="v-sc"><div class="vsl">Evidence</div><div class="vsn">6</div><div class="vsd">/10</div></div>
+      <div class="v-sc"><div class="vsl">Logic</div><div class="vsn">9</div><div class="vsd">/10</div></div>
+      <div class="v-sc"><div class="vsl">Persuasion</div><div class="vsn">7</div><div class="vsd">/10</div></div>
+    </div>
+    <div class="v-fall">
+      <div class="v-fall-hd">Logical Fallacies Detected</div>
+      <div class="fall-item">Appeal to Authority — PROSECUTION in Round 1: Cited an unverifiable expert in a non-existent field</div>
+      <div class="fall-item">Hasty Generalization — PROSECUTION in Round 2: Inferred guilt from proximity to calendars</div>
+    </div>
+    <button class="btn-nc" onclick="navigate('landing')">New Case →</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- SIM BAR -->
+<div class="simbar" id="simbar">
+  <span class="sim-l">Routes:</span>
+  <button class="simbtn route" onclick="navigate('landing')">Landing</button>
+  <button class="simbtn route" onclick="navigate('trial')">Trial</button>
+  <button class="simbtn route" onclick="navigate('verdict')">Verdict</button>
+  <span class="sim-l" style="margin-left:12px">Add:</span>
+  <button class="simbtn" onclick="simPro()">+ Prosecution</button>
+  <button class="simbtn" onclick="simDef()">+ Defense</button>
+  <button class="simbtn" onclick="simTyping()">Thinking…</button>
+  <button class="simbtn" onclick="simNextPhase()">Next Phase →</button>
+</div>
+
+<script>
+// ── CASES ──
+const CASES = [
+  {id:'001',t:'Stealing the concept of Monday from the collective consciousness of mankind'},
+  {id:'002',t:'Impersonating a licensed philosopher without a PhD'},
+  {id:'003',t:'Teaching a houseplant to feel existential dread'},
+  {id:'004',t:'Unauthorized use of the dramatic pause in casual conversation'},
+  {id:'005',t:'Inventing a new emotion without filing the proper paperwork'},
+  {id:'006',t:'Making prolonged, unsettling eye contact with a pigeon'},
+  {id:'007',t:'Possessing a suspiciously perfect handwriting in a digital age'},
+  {id:'008',t:'Time theft — taking exactly 12 minutes longer than stated in every estimate'},
+  {id:'009',t:'Weaponizing "just a quick question" in workplace settings'},
+  {id:'010',t:'Exceeding the legal confidence threshold before first coffee'},
+  {id:'011',t:'Gaslighting the Oxford comma into questioning its own existence'},
+  {id:'012',t:'Being aggressively mediocre in a jurisdiction requiring excellence or spectacular failure'},
+];
+let selectedCase = null;
+
+const grid = document.getElementById('casesGrid');
+CASES.forEach(c => {
+  const el = document.createElement('div');
+  el.className = 'cc';
+  el.innerHTML = `<div class="cn">CASE NO. ${c.id}</div><div class="ct">"${c.t}"</div><div class="ck">✓</div>`;
+  el.onclick = () => {
+    document.querySelectorAll('.cc').forEach(x => x.classList.remove('sel'));
+    el.classList.add('sel');
+    selectedCase = c;
+    document.getElementById('customInput').value = '';
+    document.getElementById('selLabel').textContent = `"${c.t.slice(0,50)}…"`;
+    document.getElementById('enterBtn').disabled = false;
+  };
+  grid.appendChild(el);
+});
+
+function onCustom() {
+  const v = document.getElementById('customInput').value.trim();
+  document.querySelectorAll('.cc').forEach(x => x.classList.remove('sel'));
+  selectedCase = v ? {id:'CUSTOM', t:v} : null;
+  document.getElementById('enterBtn').disabled = !v;
+  document.getElementById('selLabel').textContent = v ? `"${v.slice(0,52)}"` : 'No case selected';
+}
+
+function scrollToCases() {
+  document.getElementById('casesSection').scrollIntoView({behavior:'smooth'});
+}
+
+// ── ROUTER ──
+const PAGES = ['landing','trial','verdict'];
+let currentPage = 'landing';
+
+function navigate(to) {
+  if (to === currentPage) return;
+  const fromEl = document.getElementById('page-' + currentPage);
+  const toEl = document.getElementById('page-' + to);
+  const goForward = PAGES.indexOf(to) > PAGES.indexOf(currentPage);
+
+  fromEl.classList.remove('in');
+  fromEl.classList.add(goForward ? 'out-left' : 'out-right');
+  setTimeout(() => { fromEl.classList.add('hidden'); fromEl.classList.remove('out-left','out-right'); }, 460);
+
+  toEl.classList.remove('hidden');
+  toEl.classList.add(goForward ? 'out-right' : 'out-left');
+  toEl.offsetHeight;
+  setTimeout(() => { toEl.classList.remove('out-right','out-left'); toEl.classList.add('in'); }, 20);
+
+  currentPage = to;
+  if (window.__recordChoice) window.__recordChoice(to, 'Navigated to ' + to);
+}
+
+function goTrial() {
+  if (!selectedCase) return;
+  document.getElementById('trialChargeText').textContent = '"' + selectedCase.t + '"';
+  buildInitialChat();
+  navigate('trial');
+  showToast('Opening Statement');
+}
+
+// ── THEME ──
+function toggleTheme() {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
+  document.querySelectorAll('.btn-theme').forEach(b => b.textContent = isDark ? '◑ Dark' : '◑ Light');
+}
+
+// ── CHAT ──
+function buildInitialChat() {
+  const area = document.getElementById('chatArea');
+  area.innerHTML = '';
+  addMsgEl('pro', 'Ladies and gentlemen of the court — the evidence is irrefutable. Exhibit 7 places the defendant near 47 calendars on the night in question. This is not coincidence. This is a pattern of systematic temporal theft.', 100);
+  addMsgEl('def', 'I work at a calendar factory. This is, quite literally, my job description. I am in the vicinity of calendars every single day. That is not evidence — that is employment.', 300);
+  addMsgEl('pro', 'Dr. Helena Marsh, forensic chronologist at MIT, has testified that Monday showed a 3.2% decline in collective human dread precisely when the defendant joined that factory.', 500);
+}
+
+const proLines = [
+  'Your alibi crumbles under scrutiny. A "calendar factory" — how convenient that such a place grants unlimited access to the very mechanism of Monday\'s existence.',
+  'Let the record show 4,200 office workers reported inexplicable Monday ambiguity on April 14th — the day after the defendant\'s shift.',
+  'The Journal of Temporal Consciousness does not publish conjecture. The science is settled.'
+];
+const defLines = [
+  '"Forensic chronology" is not an accredited field. I move to strike this testimony on the grounds that MIT does not offer a degree in feelings about Mondays.',
+  'The prosecution\'s own evidence shows Monday dread decreased — my client improved the condition of mankind. That is a service, not a crime.',
+  'The burden of proof rests with the prosecution. Vague temporal unease is not a crime in this or any jurisdiction.'
+];
+let pi=0, di=0;
+
+function addMsgEl(role, text, delay=0) {
+  const area = document.getElementById('chatArea');
+  const wrap = area.querySelector('.typing-wrap');
+  if (wrap) wrap.remove();
+  setTimeout(() => {
+    const d = document.createElement('div');
+    d.className = 'msg' + (role==='def'?' def':'');
+    d.style.animationDelay = '0s';
+    d.innerHTML = `<div class="av${role==='def'?' me':''}">${role==='def'?'ME':'PR'}</div><div class="mc"><div class="ml">${role==='def'?'Defense':'Prosecution'}</div><div class="bub ${role==='def'?'me':'pro'}">${text}</div></div>`;
+    area.appendChild(d);
+    area.scrollTop = area.scrollHeight;
+  }, delay);
+}
+
+function simPro() { simTyping(); addMsgEl('pro', proLines[pi++ % proLines.length], 1200); }
+function simDef() { addMsgEl('def', defLines[di++ % defLines.length]); }
+
+function simTyping() {
+  const area = document.getElementById('chatArea');
+  if (area.querySelector('.typing-wrap')) return;
+  const w = document.createElement('div');
+  w.className = 'msg typing-wrap'; w.style.animationDelay='0s';
+  w.innerHTML = `<div class="av">PR</div><div class="typing-row"><div class="td"></div><div class="td"></div><div class="td"></div></div>`;
+  area.appendChild(w);
+  area.scrollTop = area.scrollHeight;
+}
+
+const phases = ['Opening Statement','Cross-Examination · R1','Cross-Examination · R2','Cross-Examination · R3','Closing Arguments'];
+const progs   = ['12%','30%','50%','68%','82%'];
+let phi = 0;
+function simNextPhase() {
+  phi = (phi+1) % phases.length;
+  document.getElementById('trialNavLabel').textContent = phases[phi];
+  document.getElementById('pillTxt').textContent = phases[phi].split('·')[0].trim();
+  document.getElementById('progBar').style.width = progs[phi];
+  document.getElementById('rndTxt').textContent = (phi>=1&&phi<=3) ? `Round ${phi} of 3` : '';
+  showToast(phases[phi]);
+}
+
+function toggleHint() {
+  const h = document.getElementById('hintBox');
+  h.style.display = h.style.display==='none' ? 'block' : 'none';
+}
+function autoResize(el) { el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,100)+'px'; }
+
+// ── TOAST ──
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast';
+  t.offsetHeight;
+  t.className = 'toast show';
+}
+</script>
+</body>
+</html>

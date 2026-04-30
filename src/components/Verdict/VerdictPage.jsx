@@ -217,7 +217,7 @@ export default function VerdictPage({ onNewCase, voiceModeOn }) {
                   display: 'flex',
                   gap: '0.5rem',
                 }}>
-                  <span style={{ flexShrink: 0 }}>⚠</span>
+                  <span style={{ flexShrink: 0 }}>!</span>
                   {f}
                 </div>
               ))}
@@ -244,7 +244,7 @@ export default function VerdictPage({ onNewCase, voiceModeOn }) {
             onMouseEnter={e => e.currentTarget.style.opacity = '0.8'}
             onMouseLeave={e => e.currentTarget.style.opacity = '1'}
           >
-            New Case →
+            New Case
           </button>
         </div>
       </div>

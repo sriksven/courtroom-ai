@@ -40,17 +40,17 @@ export function getPhaseLabelDynamic(phase, round) {
   if (phase === 'CLOSING') return 'Closing Arguments'
   if (phase === 'VERDICT') return 'Verdict'
   if (phase === 'SETUP') return 'Case Selection'
-  if (phase.startsWith('CROSS_')) return `Cross-Examination — Round ${round}`
+  if (phase.startsWith('CROSS_')) return `Cross-Examination - Round ${round}`
   return phase
 }
 
-// Legacy constants — kept for backward compat with existing tests
+// Legacy constants - kept for backward compat with existing tests
 export const PHASE_LABELS = {
   SETUP: 'Case Selection',
   OPENING: 'Opening Statement',
-  CROSS_1: 'Cross-Examination — Round 1',
-  CROSS_2: 'Cross-Examination — Round 2',
-  CROSS_3: 'Cross-Examination — Round 3',
+  CROSS_1: 'Cross-Examination - Round 1',
+  CROSS_2: 'Cross-Examination - Round 2',
+  CROSS_3: 'Cross-Examination - Round 3',
   CLOSING: 'Closing Arguments',
   VERDICT: 'Verdict',
 }

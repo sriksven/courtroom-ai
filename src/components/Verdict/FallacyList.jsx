@@ -16,7 +16,7 @@ export default function FallacyList({ fallacies }) {
               key={i}
               className="flex gap-3 items-start bg-[#0f0a04] border-l-4 border-red-700/60 rounded-r px-3 py-2"
             >
-              <span className="text-yellow-500 mt-0.5 shrink-0">⚠</span>
+              <span className="text-yellow-500 mt-0.5 shrink-0">!</span>
               <p className="text-sm font-serif text-[#F5F0E8]/80 leading-snug">{fallacy}</p>
             </li>
           ))}

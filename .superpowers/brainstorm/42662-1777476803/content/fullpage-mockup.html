@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>All Rise — Full Page Mockup</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --bg2: #f7f7f5;
+    --bg3: #f0f0ee;
+    --border: #e8e8e8;
+    --border2: #d8d8d8;
+    --text: #111111;
+    --text2: #555555;
+    --text3: #999999;
+    --accent: #111111;
+    --accent-inv: #ffffff;
+    --pro-bg: #f5f5f5;
+    --pro-border: #d8d8d8;
+    --def-bg: #ffffff;
+    --pill-bg: #f0f0ee;
+    --shadow: rgba(0,0,0,0.06);
+    --transition: background 0.4s cubic-bezier(.4,0,.2,1), color 0.4s cubic-bezier(.4,0,.2,1), border-color 0.4s cubic-bezier(.4,0,.2,1);
+  }
+  [data-theme="dark"] {
+    --bg: #0f0f0f;
+    --bg2: #161616;
+    --bg3: #1e1e1e;
+    --border: #242424;
+    --border2: #2e2e2e;
+    --text: #f0f0ee;
+    --text2: #888888;
+    --text3: #555555;
+    --accent: #f0f0ee;
+    --accent-inv: #0f0f0f;
+    --pro-bg: #1a1a1a;
+    --pro-border: #2a2a2a;
+    --def-bg: #161616;
+    --pill-bg: #1e1e1e;
+    --shadow: rgba(0,0,0,0.3);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    transition: var(--transition);
+  }
+
+  /* ── LAYOUT ── */
+  .app {
+    display: grid;
+    grid-template-rows: 56px 1px auto 1fr auto;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+  }
+
+  /* ── NAVBAR ── */
+  nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 32px;
+    background: var(--bg);
+    transition: var(--transition);
+    z-index: 10;
+  }
+  .nav-left { display: flex; align-items: center; gap: 20px; }
+  .wordmark {
+    font-size: 13px;
+    letter-spacing: 5px;
+    text-transform: uppercase;
+    font-weight: 500;
+    color: var(--text);
+    transition: var(--transition);
+  }
+  .nav-sep { width: 1px; height: 16px; background: var(--border2); }
+  .nav-phase {
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text3);
+    transition: var(--transition);
+  }
+  .nav-right { display: flex; align-items: center; gap: 16px; }
+  .live-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--text);
+    animation: pulse-dot 2s ease-in-out infinite;
+    transition: var(--transition);
+  }
+  @keyframes pulse-dot {
+    0%,100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.8); }
+  }
+  .theme-btn {
+    background: none; border: 1px solid var(--border2);
+    color: var(--text2); cursor: pointer;
+    font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+    padding: 5px 12px; border-radius: 2px;
+    transition: all 0.2s;
+  }
+  .theme-btn:hover { border-color: var(--text); color: var(--text); }
+
+  /* ── DIVIDER ── */
+  .top-rule { background: var(--border); transition: var(--transition); }
+
+  /* ── CHARGE HEADER ── */
+  .charge-section {
+    padding: 28px 32px 24px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+    transition: var(--transition);
+    animation: slide-down 0.5s cubic-bezier(.4,0,.2,1) both;
+  }
+  @keyframes slide-down {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .charge-eyebrow {
+    font-size: 10px; letter-spacing: 4px; text-transform: uppercase;
+    color: var(--text3); margin-bottom: 8px;
+    transition: var(--transition);
+  }
+  .charge-text {
+    font-size: 17px; font-weight: 400; line-height: 1.45;
+    color: var(--text); max-width: 700px;
+    transition: var(--transition);
+  }
+  .charge-meta {
+    display: flex; align-items: center; gap: 16px; margin-top: 14px;
+  }
+  .phase-pill {
+    display: inline-flex; align-items: center; gap: 7px;
+    background: var(--pill-bg); border: 1px solid var(--border);
+    padding: 5px 12px; border-radius: 2px;
+    font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--text2);
+    transition: var(--transition);
+  }
+  .pill-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--text); transition: var(--transition); }
+  .round-label {
+    font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--text3); transition: var(--transition);
+  }
+  .progress-track {
+    margin-top: 16px; height: 1.5px; background: var(--border);
+    border-radius: 1px; overflow: hidden; transition: var(--transition);
+  }
+  .progress-fill {
+    height: 100%; background: var(--text); width: 40%;
+    border-radius: 1px;
+    transition: width 0.8s cubic-bezier(.4,0,.2,1), background 0.4s;
+    animation: grow-bar 1s cubic-bezier(.4,0,.2,1) 0.3s both;
+  }
+  @keyframes grow-bar { from { width: 0; } to { width: 40%; } }
+
+  /* ── CHAT AREA ── */
+  .chat-area {
+    overflow-y: auto;
+    padding: 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    scroll-behavior: smooth;
+    background: var(--bg);
+    transition: var(--transition);
+  }
+  .chat-area::-webkit-scrollbar { width: 4px; }
+  .chat-area::-webkit-scrollbar-track { background: transparent; }
+  .chat-area::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+  .msg { display: flex; gap: 14px; align-items: flex-start; animation: msg-in 0.4s cubic-bezier(.4,0,.2,1) both; }
+  @keyframes msg-in {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .msg:nth-child(1) { animation-delay: 0.1s; }
+  .msg:nth-child(2) { animation-delay: 0.25s; }
+  .msg:nth-child(3) { animation-delay: 0.4s; }
+  .msg.defense { flex-direction: row-reverse; }
+
+  .avatar {
+    width: 32px; height: 32px; border-radius: 2px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px; letter-spacing: 1px; font-weight: 500;
+    background: var(--bg3); color: var(--text2);
+    border: 1px solid var(--border);
+    transition: var(--transition);
+  }
+  .avatar.dark-avatar { background: var(--text); color: var(--accent-inv); border-color: var(--text); }
+
+  .msg-content { max-width: 620px; }
+  .msg-label {
+    font-size: 9px; letter-spacing: 2.5px; text-transform: uppercase;
+    color: var(--text3); margin-bottom: 6px;
+    transition: var(--transition);
+  }
+  .msg.defense .msg-label { text-align: right; }
+
+  .bubble {
+    padding: 14px 18px; font-size: 14px; line-height: 1.65;
+    color: var(--text); border-radius: 2px;
+    transition: var(--transition);
+  }
+  .bubble.pro {
+    background: var(--pro-bg); border: 1px solid var(--pro-border);
+    border-left: 2px solid var(--text2);
+  }
+  .bubble.def {
+    background: var(--def-bg); border: 1px solid var(--border);
+    border-right: 2px solid var(--text2);
+    text-align: right;
+  }
+
+  .thinking {
+    display: flex; align-items: center; gap: 5px;
+    padding: 14px 18px;
+    background: var(--bg3); border: 1px solid var(--border);
+    width: fit-content; animation: msg-in 0.4s 0.5s both;
+    transition: var(--transition);
+  }
+  .dot {
+    width: 5px; height: 5px; border-radius: 50%;
+    background: var(--text3); transition: var(--transition);
+    animation: bounce-dot 1.2s ease-in-out infinite;
+  }
+  .dot:nth-child(2) { animation-delay: 0.2s; }
+  .dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes bounce-dot {
+    0%,80%,100% { transform: scale(1); opacity: 0.5; }
+    40% { transform: scale(1.3); opacity: 1; }
+  }
+
+  /* ── INPUT BAR ── */
+  .input-bar {
+    border-top: 1px solid var(--border);
+    padding: 20px 32px;
+    background: var(--bg);
+    transition: var(--transition);
+    animation: slide-up 0.5s cubic-bezier(.4,0,.2,1) 0.2s both;
+  }
+  @keyframes slide-up {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .hint-box {
+    background: var(--pill-bg); border: 1px solid var(--border);
+    padding: 10px 16px; margin-bottom: 14px; border-radius: 2px;
+    font-size: 12px; line-height: 1.6; color: var(--text2);
+    transition: var(--transition);
+  }
+  .hint-label {
+    font-size: 9px; letter-spacing: 3px; text-transform: uppercase;
+    color: var(--text3); margin-bottom: 4px; display: block;
+    transition: var(--transition);
+  }
+  .input-row { display: flex; gap: 12px; align-items: flex-end; }
+  textarea {
+    flex: 1; border: none; border-bottom: 1.5px solid var(--border2);
+    background: transparent; color: var(--text);
+    font-family: inherit; font-size: 14px; line-height: 1.5;
+    padding: 4px 0 8px; outline: none; resize: none;
+    min-height: 28px; max-height: 100px;
+    transition: border-color 0.2s, color 0.4s, background 0.4s;
+  }
+  textarea::placeholder { color: var(--text3); transition: var(--transition); }
+  textarea:focus { border-color: var(--text); }
+  .input-actions { display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
+  .icon-btn {
+    width: 34px; height: 34px; border: 1px solid var(--border2);
+    background: none; cursor: pointer; border-radius: 2px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; color: var(--text2);
+    transition: all 0.2s;
+  }
+  .icon-btn:hover { border-color: var(--text); color: var(--text); }
+  .submit-btn {
+    background: var(--accent); color: var(--accent-inv);
+    border: 1px solid var(--accent);
+    padding: 0 20px; height: 34px; cursor: pointer;
+    font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+    font-family: inherit; border-radius: 2px;
+    transition: all 0.2s;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .submit-btn:hover { opacity: 0.8; }
+  .sub-arrow { font-size: 14px; }
+
+  /* ── PHASE TRANSITION OVERLAY ── */
+  .phase-toast {
+    position: fixed; top: 72px; left: 50%; transform: translateX(-50%) translateY(-4px);
+    background: var(--text); color: var(--accent-inv);
+    padding: 10px 24px; font-size: 10px; letter-spacing: 3px;
+    text-transform: uppercase; z-index: 100; opacity: 0;
+    transition: opacity 0.4s, transform 0.4s;
+    pointer-events: none; border-radius: 2px;
+    animation: toast-in 3s cubic-bezier(.4,0,.2,1) 1s both;
+  }
+  @keyframes toast-in {
+    0% { opacity: 0; transform: translateX(-50%) translateY(-8px); }
+    15% { opacity: 1; transform: translateX(-50%) translateY(0); }
+    75% { opacity: 1; transform: translateX(-50%) translateY(0); }
+    100% { opacity: 0; transform: translateX(-50%) translateY(-8px); }
+  }
+
+  /* ── SIMULATE BUTTON ── */
+  .sim-bar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: var(--bg3); border-top: 1px solid var(--border);
+    display: flex; gap: 8px; padding: 8px 16px; align-items: center;
+    z-index: 200; transition: var(--transition);
+  }
+  .sim-label { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--text3); margin-right: 4px; }
+  .sim-btn {
+    background: none; border: 1px solid var(--border2); color: var(--text2);
+    font-size: 9px; letter-spacing: 1px; text-transform: uppercase;
+    padding: 4px 10px; cursor: pointer; border-radius: 2px; font-family: inherit;
+    transition: all 0.2s;
+  }
+  .sim-btn:hover { border-color: var(--text); color: var(--text); }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- NAV -->
+  <nav>
+    <div class="nav-left">
+      <span class="wordmark">All Rise</span>
+      <div class="nav-sep"></div>
+      <span class="nav-phase" id="navPhase">Cross-Examination · Round 2</span>
+    </div>
+    <div class="nav-right">
+      <div class="live-dot"></div>
+      <button class="theme-btn" onclick="toggleTheme()">◑ Dark mode</button>
+    </div>
+  </nav>
+
+  <!-- TOP RULE -->
+  <div class="top-rule"></div>
+
+  <!-- CHARGE SECTION -->
+  <div class="charge-section">
+    <div class="charge-eyebrow">You are accused of</div>
+    <div class="charge-text">"Stealing the concept of Monday from the collective consciousness of mankind"</div>
+    <div class="charge-meta">
+      <div class="phase-pill">
+        <div class="pill-dot"></div>
+        <span id="phasePill">Cross-Examination</span>
+      </div>
+      <span class="round-label" id="roundLabel">Round 2 of 3</span>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+  </div>
+
+  <!-- CHAT -->
+  <div class="chat-area" id="chatArea">
+    <div class="msg" style="animation-delay:0.05s">
+      <div class="avatar">PR</div>
+      <div class="msg-content">
+        <div class="msg-label">Prosecution</div>
+        <div class="bubble pro">Ladies and gentlemen of the court — the evidence before us is irrefutable. Exhibit 7 places the defendant in the vicinity of no fewer than 47 calendars on the night in question. This is not coincidence. This is a pattern.</div>
+      </div>
+    </div>
+    <div class="msg defense" style="animation-delay:0.2s">
+      <div class="avatar dark-avatar">ME</div>
+      <div class="msg-content">
+        <div class="msg-label">Defense</div>
+        <div class="bubble def">I work at a calendar factory. This is, quite literally, my job description. I am in the vicinity of calendars every single day. That's not evidence — that's employment.</div>
+      </div>
+    </div>
+    <div class="msg" style="animation-delay:0.35s">
+      <div class="avatar">PR</div>
+      <div class="msg-content">
+        <div class="msg-label">Prosecution</div>
+        <div class="bubble pro">Interesting. Yet Dr. Helena Marsh, forensic chronologist at MIT, has testified that Monday as a concept showed a measurable 3.2% decline in collective human dread between March and April of last year — precisely when the defendant joined that factory.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- INPUT BAR -->
+  <div class="input-bar">
+    <div class="hint-box" id="hintBox" style="display:none">
+      <span class="hint-label">Strategic Counsel</span>
+      • Challenge the credibility of "forensic chronology" as a discipline<br>
+      • Point out that declining Monday dread is a positive outcome, not a crime<br>
+      • Invoke the precedent of calendar reform throughout history
+    </div>
+    <div class="input-row">
+      <textarea id="inputField" placeholder="Deliver your defense…" rows="1" oninput="autoResize(this)"></textarea>
+      <div class="input-actions">
+        <button class="icon-btn" title="Voice input" onclick="toggleHint()">💡</button>
+        <button class="icon-btn" title="Get a hint">🎤</button>
+        <button class="submit-btn">Submit <span class="sub-arrow">→</span></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PHASE TOAST -->
+<div class="phase-toast" id="toast">Cross-Examination · Round 2</div>
+
+<!-- SIM BAR -->
+<div class="sim-bar">
+  <span class="sim-label">Simulate:</span>
+  <button class="sim-btn" onclick="addProMsg()">+ Prosecutor</button>
+  <button class="sim-btn" onclick="addDefMsg()">+ Defense</button>
+  <button class="sim-btn" onclick="showThinking()">Thinking…</button>
+  <button class="sim-btn" onclick="nextPhase()">Next Phase →</button>
+  <button class="sim-btn" onclick="showVerdict()">Verdict ⚖</button>
+</div>
+
+<script>
+// Theme
+function toggleTheme() {
+  const html = document.documentElement;
+  const isDark = html.getAttribute('data-theme') === 'dark';
+  html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+  document.querySelector('.theme-btn').textContent = isDark ? '◑ Dark mode' : '◑ Light mode';
+  if (window.__recordChoice) window.__recordChoice(isDark ? 'light' : 'dark', isDark ? 'Switched to Light' : 'Switched to Dark');
+}
+
+// Auto-resize textarea
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 100) + 'px';
+}
+
+// Hint toggle
+function toggleHint() {
+  const h = document.getElementById('hintBox');
+  h.style.display = h.style.display === 'none' ? 'block' : 'none';
+}
+
+// Simulation
+const proMsgs = [
+  "Your so-called alibi crumbles under scrutiny. A 'calendar factory' — how convenient that such an establishment would grant its employees unlimited access to the very mechanism of Monday's existence?",
+  "Let the record show that the defendant has failed to address the testimony of 4,200 office workers who reported an inexplicable sense of Monday ambiguity on the morning of April 14th.",
+  "Dr. Marsh's analysis is peer-reviewed and published in the Journal of Temporal Consciousness. The science does not lie, counselor."
+];
+const defMsgs = [
+  "The concept of 'forensic chronology' does not exist as an accredited field. I move to strike this testimony on the grounds that MIT does not, in fact, offer a degree in feelings about Mondays.",
+  "The prosecution's own evidence suggests that Monday dread decreased — meaning, if anything, my client improved the condition of mankind rather than harmed it.",
+  "I'd like to remind the court that the burden of proof lies with the prosecution. Vague temporal unease is not a crime in this or any jurisdiction."
+];
+let proIdx = 0; let defIdx = 0;
+let msgCounter = 3;
+
+function addMsg(role, text) {
+  const area = document.getElementById('chatArea');
+  const t = document.querySelector('.thinking');
+  if (t) t.remove();
+
+  const div = document.createElement('div');
+  div.className = 'msg' + (role === 'def' ? ' defense' : '');
+  div.style.animationDelay = '0s';
+  div.innerHTML = `
+    <div class="avatar ${role === 'def' ? 'dark-avatar' : ''}">${role === 'def' ? 'ME' : 'PR'}</div>
+    <div class="msg-content">
+      <div class="msg-label">${role === 'def' ? 'Defense' : 'Prosecution'}</div>
+      <div class="bubble ${role === 'def' ? 'def' : 'pro'}">${text}</div>
+    </div>`;
+  area.appendChild(div);
+  area.scrollTop = area.scrollHeight;
+  msgCounter++;
+}
+
+function addProMsg() {
+  showThinking();
+  setTimeout(() => addMsg('pro', proMsgs[proIdx++ % proMsgs.length]), 1200);
+}
+function addDefMsg() { addMsg('def', defMsgs[defIdx++ % defMsgs.length]); }
+
+function showThinking() {
+  const area = document.getElementById('chatArea');
+  if (document.querySelector('.thinking')) return;
+  const d = document.createElement('div');
+  d.className = 'thinking';
+  d.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
+  const wrap = document.createElement('div');
+  wrap.className = 'msg'; wrap.style.animationDelay = '0s';
+  wrap.innerHTML = `<div class="avatar">PR</div>`;
+  wrap.appendChild(d);
+  area.appendChild(wrap);
+  area.scrollTop = area.scrollHeight;
+}
+
+const phases = ['Opening Statement','Cross-Examination · R1','Cross-Examination · R2','Cross-Examination · R3','Closing Arguments'];
+const phaseProgress = ['10%','25%','45%','65%','80%'];
+let phaseIdx = 2;
+
+function nextPhase() {
+  phaseIdx = (phaseIdx + 1) % phases.length;
+  const p = phases[phaseIdx];
+  document.getElementById('navPhase').textContent = p;
+  document.getElementById('phasePill').textContent = p.split('·')[0].trim();
+  document.getElementById('progressFill').style.width = phaseProgress[phaseIdx];
+  const toast = document.getElementById('toast');
+  toast.textContent = p;
+  toast.style.animation = 'none';
+  toast.offsetHeight;
+  toast.style.animation = 'toast-in 3s cubic-bezier(.4,0,.2,1) both';
+  const roundEl = document.getElementById('roundLabel');
+  roundEl.textContent = phaseIdx >= 1 && phaseIdx <= 3 ? `Round ${phaseIdx} of 3` : '';
+}
+
+function showVerdict() {
+  const area = document.getElementById('chatArea');
+  area.innerHTML = '';
+  const vdict = document.createElement('div');
+  vdict.style.cssText = 'display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100%;padding:48px 32px;gap:24px;';
+  vdict.innerHTML = `
+    <div style="font-size:9px;letter-spacing:5px;text-transform:uppercase;color:var(--text3);animation:msg-in 0.5s both">The Court Finds</div>
+    <div style="font-size:64px;font-weight:300;letter-spacing:-2px;color:var(--text);animation:msg-in 0.5s 0.2s both;line-height:1">NOT GUILTY</div>
+    <div style="width:48px;height:1.5px;background:var(--border2);animation:msg-in 0.5s 0.35s both"></div>
+    <div style="font-size:14px;color:var(--text2);text-align:center;max-width:500px;line-height:1.7;font-style:italic;animation:msg-in 0.5s 0.4s both">"The defendant's employment at a lawful calendar establishment constitutes a complete and satisfactory alibi. The prosecution failed to establish criminal intent or demonstrate that the concept of Monday suffered any legally cognizable harm."</div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;width:100%;max-width:480px;animation:msg-in 0.5s 0.55s both">
+      ${[['Strength','8'],['Evidence','6'],['Logic','9'],['Persuasion','7']].map(([l,v])=>`
+        <div style="border:1px solid var(--border);padding:14px 12px;text-align:center;transition:var(--transition)">
+          <div style="font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);margin-bottom:6px">${l}</div>
+          <div style="font-size:22px;font-weight:300;color:var(--text)">${v}</div>
+          <div style="font-size:9px;color:var(--text3)">/10</div>
+        </div>`).join('')}
+    </div>
+    <button onclick="resetTrial()" style="margin-top:8px;background:var(--text);color:var(--accent-inv);border:none;padding:10px 28px;font-size:10px;letter-spacing:3px;text-transform:uppercase;cursor:pointer;font-family:inherit;border-radius:2px;animation:msg-in 0.5s 0.7s both">New Case →</button>
+  `;
+  area.appendChild(vdict);
+  document.getElementById('navPhase').textContent = 'Verdict';
+  document.getElementById('progressFill').style.width = '100%';
+  document.getElementById('roundLabel').textContent = '';
+  document.querySelectorAll('.input-bar')[0].style.display = 'none';
+}
+
+function resetTrial() {
+  location.reload();
+}
+</script>
+</body>
+</html>

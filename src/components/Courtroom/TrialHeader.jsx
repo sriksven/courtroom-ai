@@ -21,7 +21,7 @@ export default function TrialHeader({ accusation, phase, round }) {
             fontWeight: 'bold',
           }}
         >
-          ⚖ ALL RISE
+          ALL RISE
         </span>
 
         {/* Phase badge */}

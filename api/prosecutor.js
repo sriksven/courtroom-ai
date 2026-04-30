@@ -33,7 +33,7 @@ Do NOT request another round if:
 - The defendant has addressed your main points sufficiently
 - You have made your case
 
-Respond ONLY with valid JSON — no markdown, no extra text:
+Respond ONLY with valid JSON - no markdown, no extra text:
 {
   "response": "your cross-examination text here (3-5 sentences, theatrical, dramatic, plain text)",
   "requestAnotherRound": true or false,
@@ -50,7 +50,7 @@ export default async function handler(req, res) {
     const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
     const isCrossPhase = phase?.startsWith('CROSS_')
 
-    // Dynamic cross-examination — return JSON with continue/close decision
+    // Dynamic cross-examination - return JSON with continue/close decision
     if (isDynamic && isCrossPhase) {
       const completion = await groq.chat.completions.create({
         model: 'llama-3.3-70b-versatile',
@@ -77,7 +77,7 @@ export default async function handler(req, res) {
       })
     }
 
-    // Fixed mode or non-cross phases — plain text
+    // Fixed mode or non-cross phases - plain text
     const systemPrompt = isCrossPhase
       ? getCrossPrompt(round)
       : (PHASE_PROMPTS[phase] ?? PHASE_PROMPTS.OPENING)

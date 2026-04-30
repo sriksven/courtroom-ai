@@ -88,7 +88,7 @@ export default function TrialInputBar() {
           onChange={e => setInputText(e.target.value)}
           onKeyDown={handleKeyDown}
           disabled={isLoading}
-          placeholder={isClosing ? 'Deliver your closing argument…' : 'Type your defense here…'}
+          placeholder={isClosing ? 'Deliver your closing argument...' : 'Type your defense here...'}
           rows={3}
           style={{
             flex: 1,
@@ -131,7 +131,7 @@ export default function TrialInputBar() {
               justifyContent: 'center',
             }}
           >
-            {isListening ? '■' : '🎙'}
+            {isListening ? 'stop' : 'mic'}
           </button>
         )}
       </div>
@@ -155,7 +155,7 @@ export default function TrialInputBar() {
             gap: '4px',
           }}
         >
-          {hintLoading ? '…' : '💡'} Get a Hint
+          {hintLoading ? '...' : '?'} Get a Hint
         </button>
 
         <button
@@ -179,7 +179,7 @@ export default function TrialInputBar() {
       </div>
 
       <div style={{ textAlign: 'right', fontSize: '10px', color: 'var(--text-muted)', opacity: 0.6 }}>
-        ⌘↵ to submit
+        Cmd+Enter to submit
       </div>
     </div>
     </div>

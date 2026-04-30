@@ -92,7 +92,7 @@ function PlayButton({ msgId, text, voice, player }) {
           transition: 'color 0.15s',
         }}
       >
-        {isLoading ? '⟳' : isPlaying ? '⏸' : '▶'}
+        {isLoading ? '...' : isPlaying ? 'II' : '>'}
       </button>
       {isActive && (
         <button
@@ -108,7 +108,7 @@ function PlayButton({ msgId, text, voice, player }) {
             lineHeight: 1,
           }}
         >
-          ■
+          stop
         </button>
       )}
     </div>

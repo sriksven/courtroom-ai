@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>All Rise — Full Experience</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --bg2: #f7f7f5;
+    --bg3: #f0f0ee;
+    --border: #e8e8e8;
+    --border2: #d0d0d0;
+    --text: #111111;
+    --text2: #555555;
+    --text3: #999999;
+    --accent: #111111;
+    --accent-inv: #ffffff;
+    --pro-bg: #f5f5f5;
+    --def-bg: #ffffff;
+    --pill-bg: #f0f0ee;
+    --t: all 0.4s cubic-bezier(.4,0,.2,1);
+  }
+  [data-theme="dark"] {
+    --bg: #0f0f0f;
+    --bg2: #161616;
+    --bg3: #1e1e1e;
+    --border: #222222;
+    --border2: #2e2e2e;
+    --text: #f0f0ee;
+    --text2: #888888;
+    --text3: #444444;
+    --accent: #f0f0ee;
+    --accent-inv: #0f0f0f;
+    --pro-bg: #181818;
+    --def-bg: #141414;
+    --pill-bg: #1a1a1a;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html, body { height:100%; width:100%; overflow:hidden; font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif; background:var(--bg); color:var(--text); transition:var(--t); }
+
+  /* ─── SCREENS ─── */
+  .screen { position:fixed; inset:0; display:flex; flex-direction:column; transition:opacity 0.5s cubic-bezier(.4,0,.2,1), transform 0.5s cubic-bezier(.4,0,.2,1); }
+  .screen.hidden { opacity:0; pointer-events:none; transform:scale(0.98); }
+
+  /* ─── SHARED NAV ─── */
+  .topbar {
+    height:56px; display:flex; align-items:center; justify-content:space-between;
+    padding:0 40px; border-bottom:1px solid var(--border); flex-shrink:0;
+    background:var(--bg); transition:var(--t);
+  }
+  .wordmark { font-size:13px; letter-spacing:5px; text-transform:uppercase; font-weight:500; color:var(--text); }
+  .topbar-right { display:flex; align-items:center; gap:14px; }
+  .theme-btn { background:none; border:1px solid var(--border2); color:var(--text2); cursor:pointer; font-size:10px; letter-spacing:2px; text-transform:uppercase; padding:5px 12px; border-radius:2px; font-family:inherit; transition:all 0.2s; }
+  .theme-btn:hover { border-color:var(--text); color:var(--text); }
+  .live-indicator { display:flex; align-items:center; gap:6px; font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--text3); }
+  .live-dot { width:5px; height:5px; border-radius:50%; background:var(--text); animation:pulse-dot 2s ease-in-out infinite; }
+  @keyframes pulse-dot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.35;transform:scale(0.7)} }
+
+  /* ════════════════════════════════════
+     LANDING PAGE
+  ════════════════════════════════════ */
+  #landing { background:var(--bg); }
+
+  .landing-body {
+    flex:1; display:flex; flex-direction:column;
+    overflow-y:auto; overflow-x:hidden;
+    scroll-behavior:smooth;
+  }
+  .landing-body::-webkit-scrollbar { width:3px; }
+  .landing-body::-webkit-scrollbar-thumb { background:var(--border2); }
+
+  /* Hero */
+  .hero {
+    min-height:calc(100vh - 56px); display:flex; flex-direction:column;
+    align-items:center; justify-content:center; padding:60px 40px;
+    text-align:center; flex-shrink:0; position:relative;
+  }
+  .hero-eyebrow { font-size:10px; letter-spacing:5px; text-transform:uppercase; color:var(--text3); margin-bottom:20px; animation:fade-up 0.6s 0.1s both; }
+  .hero-title { font-size:clamp(48px,8vw,96px); font-weight:300; letter-spacing:-3px; line-height:0.95; color:var(--text); margin-bottom:24px; animation:fade-up 0.6s 0.2s both; }
+  .hero-sub { font-size:15px; color:var(--text2); max-width:440px; line-height:1.6; margin-bottom:40px; animation:fade-up 0.6s 0.3s both; }
+  .hero-cta-group { display:flex; gap:12px; animation:fade-up 0.6s 0.4s both; }
+  .btn-primary { background:var(--accent); color:var(--accent-inv); border:1px solid var(--accent); padding:12px 32px; font-size:11px; letter-spacing:3px; text-transform:uppercase; cursor:pointer; font-family:inherit; border-radius:2px; transition:all 0.2s; }
+  .btn-primary:hover { opacity:0.8; }
+  .btn-ghost { background:none; color:var(--text2); border:1px solid var(--border2); padding:12px 24px; font-size:11px; letter-spacing:2px; text-transform:uppercase; cursor:pointer; font-family:inherit; border-radius:2px; transition:all 0.2s; }
+  .btn-ghost:hover { border-color:var(--text); color:var(--text); }
+  .scroll-hint { position:absolute; bottom:32px; left:50%; transform:translateX(-50%); font-size:9px; letter-spacing:3px; text-transform:uppercase; color:var(--text3); display:flex; flex-direction:column; align-items:center; gap:8px; animation:fade-up 0.6s 0.8s both; }
+  .scroll-arrow { animation:bounce-down 1.5s ease-in-out infinite; }
+  @keyframes bounce-down { 0%,100%{transform:translateY(0)} 50%{transform:translateY(5px)} }
+  @keyframes fade-up { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+
+  /* Cases section */
+  .cases-section {
+    padding:80px 40px 120px; background:var(--bg2);
+    border-top:1px solid var(--border); transition:var(--t);
+  }
+  .section-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:32px; }
+  .section-title { font-size:11px; letter-spacing:4px; text-transform:uppercase; color:var(--text3); }
+  .section-count { font-size:11px; color:var(--text3); letter-spacing:1px; }
+
+  .cases-grid {
+    display:grid; grid-template-columns:repeat(3,1fr); gap:1px;
+    background:var(--border); border:1px solid var(--border);
+    margin-bottom:1px;
+  }
+  .case-card {
+    background:var(--bg2); padding:24px; cursor:pointer;
+    transition:background 0.15s, transform 0.15s;
+    position:relative; overflow:hidden;
+    display:flex; flex-direction:column; gap:10px;
+    min-height:130px;
+  }
+  .case-card:hover { background:var(--bg3); }
+  .case-card.selected { background:var(--text); }
+  .case-card.selected .case-num { color:rgba(255,255,255,0.4); }
+  .case-card.selected .case-text { color:rgba(255,255,255,0.9); }
+  .case-num { font-size:9px; letter-spacing:3px; font-family:'Courier New',monospace; color:var(--text3); transition:var(--t); }
+  .case-text { font-size:13px; line-height:1.5; color:var(--text); display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; transition:var(--t); }
+  .case-check { position:absolute; top:12px; right:12px; font-size:12px; opacity:0; transition:opacity 0.2s; }
+  .case-card.selected .case-check { opacity:1; filter:invert(1); }
+
+  /* Custom input row */
+  .custom-row {
+    background:var(--bg2); border:1px solid var(--border);
+    padding:20px 24px; display:flex; align-items:center; gap:16px;
+    transition:var(--t);
+  }
+  .custom-label { font-size:10px; letter-spacing:3px; text-transform:uppercase; color:var(--text3); flex-shrink:0; transition:var(--t); }
+  .custom-field {
+    flex:1; border:none; border-bottom:1px solid var(--border2); background:transparent;
+    color:var(--text); font-family:inherit; font-size:14px; padding:4px 0;
+    outline:none; transition:border-color 0.2s, color 0.4s;
+  }
+  .custom-field::placeholder { color:var(--text3); }
+  .custom-field:focus { border-color:var(--text); }
+
+  .start-row { margin-top:32px; display:flex; justify-content:flex-end; align-items:center; gap:16px; }
+  .selected-label { font-size:12px; color:var(--text2); font-style:italic; }
+  .btn-start { background:var(--accent); color:var(--accent-inv); border:1px solid var(--accent); padding:14px 40px; font-size:11px; letter-spacing:3px; text-transform:uppercase; cursor:pointer; font-family:inherit; border-radius:2px; transition:all 0.2s; }
+  .btn-start:disabled { opacity:0.3; cursor:not-allowed; }
+  .btn-start:not(:disabled):hover { opacity:0.8; }
+
+  /* ════════════════════════════════════
+     TRIAL SCREEN
+  ════════════════════════════════════ */
+  #trial { background:var(--bg); }
+
+  .trial-layout { flex:1; display:grid; grid-template-rows:auto 1fr auto; overflow:hidden; }
+
+  /* Charge bar */
+  .charge-bar {
+    padding:20px 40px; border-bottom:1px solid var(--border);
+    background:var(--bg); transition:var(--t);
+    animation:slide-down 0.5s cubic-bezier(.4,0,.2,1) both;
+  }
+  @keyframes slide-down { from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:translateY(0)} }
+  .charge-eyebrow { font-size:9px; letter-spacing:4px; text-transform:uppercase; color:var(--text3); margin-bottom:6px; }
+  .charge-text { font-size:15px; color:var(--text); line-height:1.4; font-weight:400; }
+  .charge-meta { display:flex; align-items:center; gap:14px; margin-top:12px; }
+  .phase-pill { display:inline-flex; align-items:center; gap:7px; background:var(--pill-bg); border:1px solid var(--border); padding:4px 11px; border-radius:2px; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text2); transition:var(--t); }
+  .pdot { width:4px; height:4px; border-radius:50%; background:var(--text); }
+  .round-txt { font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text3); }
+  .prog-track { margin-top:12px; height:1.5px; background:var(--border); }
+  .prog-fill { height:100%; background:var(--text); width:45%; transition:width 0.8s cubic-bezier(.4,0,.2,1),background 0.4s; }
+
+  /* Chat */
+  .chat { overflow-y:auto; padding:32px 40px; display:flex; flex-direction:column; gap:20px; scroll-behavior:smooth; }
+  .chat::-webkit-scrollbar { width:3px; }
+  .chat::-webkit-scrollbar-thumb { background:var(--border2); }
+
+  .msg { display:flex; gap:12px; align-items:flex-start; animation:msg-in 0.45s cubic-bezier(.4,0,.2,1) both; }
+  .msg.def { flex-direction:row-reverse; }
+  @keyframes msg-in { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+  .ava { width:30px; height:30px; border-radius:2px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:8px; letter-spacing:1px; font-weight:600; border:1px solid var(--border); background:var(--bg3); color:var(--text2); transition:var(--t); }
+  .ava.me { background:var(--text); color:var(--accent-inv); border-color:var(--text); }
+  .mc { max-width:600px; }
+  .ml { font-size:8px; letter-spacing:2.5px; text-transform:uppercase; color:var(--text3); margin-bottom:5px; transition:var(--t); }
+  .def .ml { text-align:right; }
+  .bub { padding:12px 16px; font-size:14px; line-height:1.65; color:var(--text); border-radius:2px; transition:var(--t); }
+  .bub.pro { background:var(--pro-bg); border:1px solid var(--border); border-left:2px solid var(--border2); }
+  .bub.me { background:var(--def-bg); border:1px solid var(--border); border-right:2px solid var(--border2); text-align:right; }
+
+  .typing { display:flex; align-items:center; gap:5px; padding:12px 16px; background:var(--bg3); border:1px solid var(--border); width:fit-content; border-radius:2px; }
+  .td { width:5px; height:5px; border-radius:50%; background:var(--text3); animation:tdot 1.2s ease-in-out infinite; }
+  .td:nth-child(2){animation-delay:.2s} .td:nth-child(3){animation-delay:.4s}
+  @keyframes tdot { 0%,80%,100%{transform:scale(1);opacity:.4} 40%{transform:scale(1.4);opacity:1} }
+
+  /* Input */
+  .input-bar {
+    border-top:1px solid var(--border); padding:20px 40px;
+    background:var(--bg); transition:var(--t);
+    animation:slide-up 0.5s 0.15s both;
+  }
+  @keyframes slide-up { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+  .hint-panel { background:var(--bg3); border:1px solid var(--border); padding:10px 16px; margin-bottom:12px; font-size:12px; line-height:1.7; color:var(--text2); border-radius:2px; transition:var(--t); animation:msg-in 0.3s both; }
+  .hint-lbl { font-size:8px; letter-spacing:3px; text-transform:uppercase; color:var(--text3); display:block; margin-bottom:4px; }
+  .irow { display:flex; gap:10px; align-items:flex-end; }
+  textarea { flex:1; border:none; border-bottom:1.5px solid var(--border2); background:transparent; color:var(--text); font-family:inherit; font-size:14px; line-height:1.5; padding:4px 0 8px; outline:none; resize:none; transition:border-color .2s,color .4s; }
+  textarea::placeholder { color:var(--text3); }
+  textarea:focus { border-color:var(--text); }
+  .iactions { display:flex; gap:8px; align-items:center; flex-shrink:0; }
+  .ibtn { width:34px; height:34px; border:1px solid var(--border2); background:none; cursor:pointer; border-radius:2px; display:flex; align-items:center; justify-content:center; font-size:13px; color:var(--text2); transition:all .2s; }
+  .ibtn:hover { border-color:var(--text); color:var(--text); }
+  .sbtn { background:var(--accent); color:var(--accent-inv); border:1px solid var(--accent); padding:0 20px; height:34px; cursor:pointer; font-size:10px; letter-spacing:2px; text-transform:uppercase; font-family:inherit; border-radius:2px; transition:all .2s; }
+  .sbtn:hover { opacity:.8; }
+
+  /* Phase toast */
+  .toast { position:fixed; top:68px; left:50%; transform:translateX(-50%); background:var(--text); color:var(--accent-inv); padding:9px 22px; font-size:9px; letter-spacing:3px; text-transform:uppercase; z-index:1000; border-radius:2px; opacity:0; pointer-events:none; }
+  .toast.show { animation:toast-pop 2.8s cubic-bezier(.4,0,.2,1) both; }
+  @keyframes toast-pop { 0%{opacity:0;transform:translateX(-50%) translateY(-6px)} 12%{opacity:1;transform:translateX(-50%) translateY(0)} 80%{opacity:1} 100%{opacity:0;transform:translateX(-50%) translateY(-6px)} }
+
+  /* Verdict */
+  .verdict-view { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:48px; gap:20px; min-height:100%; }
+  .v-label { font-size:9px; letter-spacing:5px; text-transform:uppercase; color:var(--text3); animation:msg-in .5s both; }
+  .v-result { font-size:clamp(40px,8vw,80px); font-weight:300; letter-spacing:-2px; color:var(--text); animation:msg-in .5s .15s both; line-height:1; }
+  .v-rule { width:40px; height:1px; background:var(--border2); animation:msg-in .5s .3s both; }
+  .v-statement { font-size:14px; color:var(--text2); text-align:center; max-width:520px; line-height:1.7; font-style:italic; animation:msg-in .5s .4s both; }
+  .v-scores { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; width:100%; max-width:480px; animation:msg-in .5s .55s both; }
+  .v-score { border:1px solid var(--border); padding:14px 10px; text-align:center; transition:var(--t); }
+  .vsl { font-size:8px; letter-spacing:2px; text-transform:uppercase; color:var(--text3); margin-bottom:6px; }
+  .vsn { font-size:24px; font-weight:300; color:var(--text); }
+  .vsd { font-size:9px; color:var(--text3); }
+  .v-newcase { background:var(--accent); color:var(--accent-inv); border:none; padding:11px 30px; font-size:10px; letter-spacing:3px; text-transform:uppercase; cursor:pointer; font-family:inherit; border-radius:2px; animation:msg-in .5s .7s both; transition:all .2s; }
+  .v-newcase:hover { opacity:.8; }
+
+  /* Sim bar */
+  .simbar { position:fixed; bottom:0; left:0; right:0; background:var(--bg3); border-top:1px solid var(--border); display:flex; gap:8px; padding:8px 16px; align-items:center; z-index:500; transition:var(--t); }
+  .simlbl { font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text3); margin-right:4px; }
+  .simbtn { background:none; border:1px solid var(--border2); color:var(--text2); font-size:9px; letter-spacing:1px; text-transform:uppercase; padding:4px 10px; cursor:pointer; border-radius:2px; font-family:inherit; transition:all .2s; }
+  .simbtn:hover { border-color:var(--text); color:var(--text); }
+</style>
+</head>
+<body>
+
+<!-- ══════════ LANDING ══════════ -->
+<div class="screen" id="landing">
+  <div class="topbar">
+    <span class="wordmark">⚖ All Rise</span>
+    <div class="topbar-right">
+      <button class="theme-btn" onclick="toggleTheme()">◑ Dark</button>
+    </div>
+  </div>
+
+  <div class="landing-body" id="landingBody">
+    <!-- Hero -->
+    <div class="hero">
+      <div class="hero-eyebrow">A Courtroom of Questionable Justice</div>
+      <div class="hero-title">All<br>Rise</div>
+      <div class="hero-sub">You stand accused. Three AI agents will prosecute, judge, and witness your defense. The verdict is final.</div>
+      <div class="hero-cta-group">
+        <button class="btn-primary" onclick="scrollToCases()">Select Your Charge →</button>
+        <button class="btn-ghost" onclick="scrollToCases()">View Cases</button>
+      </div>
+      <div class="scroll-hint">
+        <span>Scroll to browse cases</span>
+        <span class="scroll-arrow">↓</span>
+      </div>
+    </div>
+
+    <!-- Cases -->
+    <div class="cases-section" id="casesSection">
+      <div class="section-header">
+        <span class="section-title">Select Your Charge</span>
+        <span class="section-count">12 cases</span>
+      </div>
+      <div class="cases-grid" id="casesGrid">
+        <!-- populated by JS -->
+      </div>
+      <div class="custom-row">
+        <span class="custom-label">Or write your own</span>
+        <input class="custom-field" id="customField" placeholder="The defendant stands accused of…" oninput="onCustomInput()" />
+      </div>
+      <div class="start-row">
+        <span class="selected-label" id="selectedLabel">No case selected</span>
+        <button class="btn-start" id="startBtn" disabled onclick="enterTrial()">Enter the Courtroom →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ TRIAL ══════════ -->
+<div class="screen hidden" id="trial">
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:16px">
+      <span class="wordmark">⚖ All Rise</span>
+      <div style="width:1px;height:16px;background:var(--border2)"></div>
+      <span id="trialPhaseLabel" style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--text3)">Opening Statement</span>
+    </div>
+    <div class="topbar-right">
+      <div class="live-indicator"><div class="live-dot"></div>Trial in session</div>
+      <button class="theme-btn" onclick="toggleTheme()">◑ Dark</button>
+    </div>
+  </div>
+
+  <div class="trial-layout">
+    <div class="charge-bar">
+      <div class="charge-eyebrow">You are accused of</div>
+      <div class="charge-text" id="trialCharge">"Stealing the concept of Monday from the collective consciousness of mankind"</div>
+      <div class="charge-meta">
+        <div class="phase-pill"><div class="pdot"></div><span id="pillLabel">Opening Statement</span></div>
+        <span class="round-txt" id="roundTxt"></span>
+      </div>
+      <div class="prog-track"><div class="prog-fill" id="progFill"></div></div>
+    </div>
+
+    <div class="chat" id="chatArea">
+      <div class="msg">
+        <div class="ava">PR</div>
+        <div class="mc">
+          <div class="ml">Prosecution</div>
+          <div class="bub pro">Ladies and gentlemen of the court — the evidence before us is irrefutable. Exhibit 7 places the defendant in the vicinity of no fewer than 47 calendars on the night in question. This is not coincidence. This is a pattern of systematic temporal theft.</div>
+        </div>
+      </div>
+      <div class="msg def">
+        <div class="ava me">ME</div>
+        <div class="mc">
+          <div class="ml">Defense</div>
+          <div class="bub me">I work at a calendar factory. This is, quite literally, my job description. I am in the vicinity of calendars every single day. That is not evidence — that is employment.</div>
+        </div>
+      </div>
+      <div class="msg">
+        <div class="ava">PR</div>
+        <div class="mc">
+          <div class="ml">Prosecution</div>
+          <div class="bub pro">Interesting. Yet Dr. Helena Marsh, forensic chronologist at MIT, has testified that Monday as a concept showed a measurable 3.2% decline in collective human dread precisely when the defendant joined that factory.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="input-bar" id="inputBarEl">
+      <div class="hint-panel" id="hintPanel" style="display:none">
+        <span class="hint-lbl">Strategic Counsel</span>
+        • Challenge "forensic chronology" — it is not an accredited field<br>
+        • Declining Monday dread is a positive outcome, not a crime<br>
+        • Burden of proof rests entirely with the prosecution
+      </div>
+      <div class="irow">
+        <textarea id="defenseInput" placeholder="Deliver your defense…" rows="1" oninput="autoResize(this)"></textarea>
+        <div class="iactions">
+          <button class="ibtn" title="Get a hint" onclick="toggleHint()">💡</button>
+          <button class="ibtn" title="Voice input">🎤</button>
+          <button class="sbtn" id="submitBtn">Submit →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- SIM BAR -->
+<div class="simbar" id="simbar">
+  <span class="simlbl">Preview:</span>
+  <button class="simbtn" onclick="addPro()">+ Prosecution</button>
+  <button class="simbtn" onclick="addDef()">+ Defense</button>
+  <button class="simbtn" onclick="showTyping()">Thinking…</button>
+  <button class="simbtn" onclick="nextPhase()">Next Phase →</button>
+  <button class="simbtn" onclick="showVerdict()">Verdict ⚖</button>
+  <button class="simbtn" onclick="goLanding()" style="margin-left:auto">← Landing</button>
+</div>
+
+<script>
+// ── Cases data ──
+const CASES = [
+  {id:'001',text:'Stealing the concept of Monday from the collective consciousness of mankind'},
+  {id:'002',text:'Impersonating a licensed philosopher without a PhD'},
+  {id:'003',text:'Teaching a houseplant to feel existential dread'},
+  {id:'004',text:'Unauthorized use of the dramatic pause in casual conversation'},
+  {id:'005',text:'Inventing a new emotion without filing the proper forms'},
+  {id:'006',text:'Making prolonged, unsettling eye contact with a pigeon'},
+  {id:'007',text:'Possessing a suspiciously perfect handwriting style in a digital age'},
+  {id:'008',text:'Time theft — taking exactly 12 minutes longer than stated in every estimate'},
+  {id:'009',text:'Weaponizing the phrase "just a quick question" in workplace settings'},
+  {id:'010',text:'Exceeding the legal confidence threshold before first coffee'},
+  {id:'011',text:'Gaslighting the Oxford comma into questioning its own existence'},
+  {id:'012',text:'Being aggressively mediocre in a jurisdiction requiring excellence or spectacular failure'},
+];
+
+let selectedCase = null;
+
+// Build cases grid
+const grid = document.getElementById('casesGrid');
+CASES.forEach(c => {
+  const el = document.createElement('div');
+  el.className = 'case-card';
+  el.innerHTML = `<div class="case-num">CASE NO. ${c.id}</div><div class="case-text">"${c.text}"</div><div class="case-check">✓</div>`;
+  el.onclick = () => selectCase(c, el);
+  grid.appendChild(el);
+});
+
+function selectCase(c, el) {
+  document.querySelectorAll('.case-card').forEach(x => x.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedCase = c;
+  document.getElementById('customField').value = '';
+  document.getElementById('selectedLabel').textContent = `"${c.text.slice(0,48)}…"`;
+  document.getElementById('startBtn').disabled = false;
+}
+
+function onCustomInput() {
+  const v = document.getElementById('customField').value.trim();
+  document.querySelectorAll('.case-card').forEach(x => x.classList.remove('selected'));
+  selectedCase = v ? {id:'CUSTOM', text:v} : null;
+  document.getElementById('startBtn').disabled = !v;
+  document.getElementById('selectedLabel').textContent = v ? `"${v.slice(0,48)}"` : 'No case selected';
+}
+
+function scrollToCases() {
+  document.getElementById('casesSection').scrollIntoView({behavior:'smooth'});
+}
+
+// ── Screen transitions ──
+function enterTrial() {
+  if (!selectedCase) return;
+  document.getElementById('trialCharge').textContent = `"${selectedCase.text}"`;
+  showScreen('trial');
+  showToast('Opening Statement');
+}
+
+function goLanding() {
+  showScreen('landing');
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => {
+    s.classList.toggle('hidden', s.id !== id);
+  });
+}
+
+// ── Theme ──
+function toggleTheme() {
+  const html = document.documentElement;
+  const dark = html.getAttribute('data-theme') === 'dark';
+  html.setAttribute('data-theme', dark ? 'light' : 'dark');
+  document.querySelectorAll('.theme-btn').forEach(b => b.textContent = dark ? '◑ Dark' : '◑ Light');
+}
+
+// ── Input ──
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 100) + 'px';
+}
+function toggleHint() {
+  const h = document.getElementById('hintPanel');
+  h.style.display = h.style.display === 'none' ? 'block' : 'none';
+}
+
+// ── Trial simulation ──
+const proLines = [
+  'Your so-called alibi crumbles under scrutiny. A calendar factory — how convenient that such a place grants unlimited access to the very mechanism of Monday\'s existence.',
+  'Let the record show 4,200 office workers reported an inexplicable sense of Monday ambiguity on April 14th — the day after the defendant\'s shift.',
+  'Dr. Marsh\'s analysis is peer-reviewed and published in the Journal of Temporal Consciousness. The science does not lie.'
+];
+const defLines = [
+  '"Forensic chronology" is not an accredited field. I move to strike this testimony on the grounds that MIT does not offer a degree in feelings about Mondays.',
+  'The prosecution\'s own evidence suggests Monday dread decreased — meaning my client improved the condition of mankind. That is not a crime; that is a public service.',
+  'The burden of proof rests entirely with the prosecution. Vague temporal unease is not a crime in this or any jurisdiction.'
+];
+let pi=0, di=0;
+
+function addMsg(role, text, delay=0) {
+  const area = document.getElementById('chatArea');
+  const typing = area.querySelector('.typing-wrap');
+  if (typing) typing.remove();
+  setTimeout(() => {
+    const isDef = role === 'def';
+    const d = document.createElement('div');
+    d.className = 'msg' + (isDef ? ' def' : '');
+    d.style.animationDelay = '0s';
+    d.innerHTML = `<div class="ava${isDef?' me':''}">${isDef?'ME':'PR'}</div><div class="mc"><div class="ml">${isDef?'Defense':'Prosecution'}</div><div class="bub ${isDef?'me':'pro'}">${text}</div></div>`;
+    area.appendChild(d);
+    area.scrollTop = area.scrollHeight;
+  }, delay);
+}
+
+function addPro() {
+  showTyping();
+  addMsg('pro', proLines[pi++ % proLines.length], 1200);
+}
+function addDef() { addMsg('def', defLines[di++ % defLines.length]); }
+
+function showTyping() {
+  const area = document.getElementById('chatArea');
+  if (area.querySelector('.typing-wrap')) return;
+  const w = document.createElement('div');
+  w.className = 'msg typing-wrap'; w.style.animationDelay='0s';
+  w.innerHTML = `<div class="ava">PR</div><div class="typing"><div class="td"></div><div class="td"></div><div class="td"></div></div>`;
+  area.appendChild(w);
+  area.scrollTop = area.scrollHeight;
+}
+
+const phases = ['Opening Statement','Cross-Examination · R1','Cross-Examination · R2','Cross-Examination · R3','Closing Arguments'];
+const progress = ['12%','30%','50%','68%','82%'];
+let phi = 0;
+function nextPhase() {
+  phi = (phi+1) % phases.length;
+  const p = phases[phi];
+  document.getElementById('trialPhaseLabel').textContent = p;
+  document.getElementById('pillLabel').textContent = p.split('·')[0].trim();
+  document.getElementById('progFill').style.width = progress[phi];
+  document.getElementById('roundTxt').textContent = (phi>=1&&phi<=3)?`Round ${phi} of 3`:'';
+  showToast(p);
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast';
+  t.offsetHeight;
+  t.className = 'toast show';
+}
+
+function showVerdict() {
+  const area = document.getElementById('chatArea');
+  area.innerHTML = '';
+  const v = document.createElement('div');
+  v.className = 'verdict-view';
+  v.innerHTML = `
+    <div class="v-label">The court finds the defendant</div>
+    <div class="v-result">NOT GUILTY</div>
+    <div class="v-rule"></div>
+    <div class="v-statement">"The defendant's employment at a lawful calendar establishment constitutes a complete alibi. The prosecution failed to establish criminal intent or demonstrate that the concept of Monday suffered any legally cognizable harm."</div>
+    <div class="v-scores">
+      ${[['Strength','8'],['Evidence','6'],['Logic','9'],['Persuasion','7']].map(([l,n])=>`<div class="v-score"><div class="vsl">${l}</div><div class="vsn">${n}</div><div class="vsd">/10</div></div>`).join('')}
+    </div>
+    <button class="v-newcase" onclick="goLanding()">New Case →</button>
+  `;
+  area.appendChild(v);
+  document.getElementById('inputBarEl').style.display = 'none';
+  document.getElementById('progFill').style.width = '100%';
+  document.getElementById('trialPhaseLabel').textContent = 'Verdict';
+}
+</script>
+</body>
+</html>

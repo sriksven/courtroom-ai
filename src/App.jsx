@@ -34,10 +34,10 @@ export default function App() {
 
   return (
     <TrialProvider>
-      {/* Theme toggle only shown on landing and verdict — trial page embeds it in the header */}
+      {/* Theme toggle only shown on landing and verdict - trial page embeds it in the header */}
       {page !== 'trial' && (
         <button className="theme-toggle" onClick={toggleTheme} title="Toggle theme">
-          {theme === 'light' ? '☽' : '○'}
+          {theme === 'light' ? 'Dark' : 'Light'}
         </button>
       )}
 

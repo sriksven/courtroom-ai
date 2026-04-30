@@ -64,9 +64,9 @@ export default function TrialPage({ onVerdict, onBack, voiceModeOn, onVoiceModeC
   }
 
   const voiceLabel = {
-    off: '🎙',
-    hybrid: '🎙 Auto',
-    full: '🎙 Live',
+    off: 'Voice',
+    hybrid: 'Auto Voice',
+    full: 'Live Voice',
   }[voiceModeOn]
 
   const isFullVoiceConnecting = voiceModeOn === 'full' &&
@@ -121,7 +121,7 @@ export default function TrialPage({ onVerdict, onBack, voiceModeOn, onVoiceModeC
               flexShrink: 0,
             }}
           >
-            {isFullVoiceConnecting ? '⟳' : voiceLabel}
+            {isFullVoiceConnecting ? '...' : voiceLabel}
           </button>
         </div>
 
@@ -147,7 +147,7 @@ export default function TrialPage({ onVerdict, onBack, voiceModeOn, onVoiceModeC
             cursor: 'pointer',
           }}
         >
-          {theme === 'light' ? '☽' : '○'}
+          {theme === 'light' ? 'Dark' : 'Light'}
         </button>
       </div>
 
@@ -166,8 +166,8 @@ export default function TrialPage({ onVerdict, onBack, voiceModeOn, onVoiceModeC
         <span style={{ fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
           {phaseLabel}{isCross
             ? isDynamic
-              ? ` · Round ${round} — Prosecution may continue`
-              : ` · Round ${round} of ${rounds}`
+              ? ` - Round ${round} - Prosecution may continue`
+              : ` - Round ${round} of ${rounds}`
             : ''}
         </span>
       </div>

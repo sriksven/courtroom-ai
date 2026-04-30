@@ -1,4 +1,4 @@
-# All Rise — AI Courtroom Simulation
+# All Rise - AI Courtroom Simulation
 
 > You are the defendant. The charge is absurd. The prosecutor is an AI that remembers every word you say. You have the right to remain eloquent.
 
@@ -17,13 +17,13 @@
 
 | Name | Role |
 |---|---|
-| **Krishna Venkatesh** | Solo — Full Stack, AI Architecture, Design |
+| **Krishna Venkatesh** | Solo - Full Stack, AI Architecture, Design |
 
 ---
 
 ## What It Is
 
-All Rise is a fully realized adversarial AI courtroom. You face real social-crime charges — from commandeering the aux cord to leaving a pan soaking for eleven days — and must argue your innocence across structured trial phases against three independent AI agents:
+All Rise is a fully realized adversarial AI courtroom. You face real social-crime charges - from commandeering the aux cord to leaving a pan soaking for eleven days - and must argue your innocence across structured trial phases against three independent AI agents:
 
 | Agent | Model | Role |
 |---|---|---|
@@ -37,7 +37,7 @@ The trial takes ~4 minutes. There is no guaranteed outcome. You can lose.
 
 ## Try It
 
-**[→ courtroom-ai-eight.vercel.app](https://courtroom-ai-eight.vercel.app)**
+**[-> courtroom-ai-eight.vercel.app](https://courtroom-ai-eight.vercel.app)**
 
 1. Pick a charge (or write your own)
 2. Choose **Text** or **Auto Voice** mode
@@ -49,17 +49,17 @@ The trial takes ~4 minutes. There is no guaranteed outcome. You can lose.
 ## Architecture
 
 ```
-Browser (React 18 + Vite) — Vercel
+Browser (React 18 + Vite) - Vercel
 │
-├── /api/prosecutor      ← Groq llama-3.3-70b  (stateless fallback)
-├── /api/judge           ← OpenAI GPT-4o       (stateless fallback)
-├── /api/defense-hint    ← Groq llama-3.3-70b  (stateless fallback)
-├── /api/tts             ← OpenAI tts-1-hd     (voices: onyx / shimmer / alloy)
-└── /api/livekit-token   ← mints LiveKit JWT
+├── /api/prosecutor      <- Groq llama-3.3-70b  (stateless fallback)
+├── /api/judge           <- OpenAI GPT-4o       (stateless fallback)
+├── /api/defense-hint    <- Groq llama-3.3-70b  (stateless fallback)
+├── /api/tts             <- OpenAI tts-1-hd     (voices: onyx / shimmer / alloy)
+└── /api/livekit-token   <- mints LiveKit JWT
          │
-         └── WebSocket → LiveKit Cloud
+         └── WebSocket -> LiveKit Cloud
                               │
-                              └── Agent Process — Railway
+                              └── Agent Process - Railway
                                     │
                                     ├── TrialOrchestrator
                                     ├── Prosecutor Agent  (ReAct loop + 4 tools)
@@ -72,20 +72,20 @@ Browser (React 18 + Vite) — Vercel
                                                 └── defenseMemory
 ```
 
-**Fallback design:** if the Railway agent is down, all calls route silently to the Vercel HTTP API — stateless but fully functional.
+**Fallback design:** if the Railway agent is down, all calls route silently to the Vercel HTTP API - stateless but fully functional.
 
 ---
 
 ## Key Features
 
 - **3 AI agents** with separate models, memory, and goals operating on the same trial
-- **Prosecutor ReAct loop** — recalls weaknesses, detects fallacies, tracks unused evidence, adapts strategy every round
-- **Per-trial memory** — prosecutor in round 3 knows what it said in rounds 1 and 2
-- **Fixed or dynamic rounds** — choose 1–5 rounds, or let the prosecutor decide after each cross-examination
-- **3 interaction modes** — type, auto-voice (browser STT/TTS while-loop), full live voice (LiveKit WebRTC)
+- **Prosecutor ReAct loop** - recalls weaknesses, detects fallacies, tracks unused evidence, adapts strategy every round
+- **Per-trial memory** - prosecutor in round 3 knows what it said in rounds 1 and 2
+- **Fixed or dynamic rounds** - choose 1–5 rounds, or let the prosecutor decide after each cross-examination
+- **3 interaction modes** - type, auto-voice (browser STT/TTS while-loop), full live voice (LiveKit WebRTC)
 - **Play/pause/stop TTS** on every chat bubble (3 distinct voices)
-- **Judge scores 4 dimensions** — Argument Strength, Evidence, Logic, Persuasion (max 40pts; ≥24 = Not Guilty)
-- **Animated verdict page** — count-up scores, fallacy list, guilty/not-guilty banner
+- **Judge scores 4 dimensions** - Argument Strength, Evidence, Logic, Persuasion (max 40pts; ≥24 = Not Guilty)
+- **Animated verdict page** - count-up scores, fallacy list, guilty/not-guilty banner
 - **Light/dark theme**, smooth page transitions
 - **79 automated tests** (Vitest + React Testing Library)
 
@@ -96,16 +96,16 @@ Browser (React 18 + Vite) — Vercel
 Every round runs a **ReAct loop**:
 
 ```
-OBSERVE  →  recallWeaknesses(defenseText)     [Groq: what gaps did they expose?]
+OBSERVE  ->  recallWeaknesses(defenseText)     [Groq: what gaps did they expose?]
             detectFallacy(defenseText)         [Groq: did they commit a fallacy?]
             recallAttackStrategy(memory)       [pure read: current strategy]
             getUnusedEvidence(memory)          [pure read: unused evidence types]
 
-ACT      →  groqChat(prompt + tool results)   [generate prosecutor response]
+ACT      ->  groqChat(prompt + tool results)   [generate prosecutor response]
 
-WRITE    →  recordEvidenceUsed                [update memory]
+WRITE    ->  recordEvidenceUsed                [update memory]
             updateAttackStrategy              [Groq analyzes exchange, writes new strategy]
-            addFallacy → judgeMemory          [if detected]
+            addFallacy -> judgeMemory          [if detected]
             addRoundSummary                   [one-sentence round log]
 ```
 
@@ -151,7 +151,7 @@ all-rise/
 - Node.js 18+
 - [Groq API key](https://console.groq.com) (free)
 - [OpenAI API key](https://platform.openai.com/api-keys)
-- [LiveKit account](https://livekit.io) *(optional — app works without it)*
+- [LiveKit account](https://livekit.io) *(optional - app works without it)*
 
 ### Run
 

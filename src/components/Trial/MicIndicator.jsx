@@ -1,12 +1,12 @@
 import { SESSION_STATES } from '../../hooks/useVoicePipeline.js'
 
 const STATE_CONFIG = {
-  [SESSION_STATES.CONNECTING]:     { label: 'Connecting to court…',    color: 'var(--text-muted)', bars: false, pulse: false },
-  [SESSION_STATES.AGENT_READY]:    { label: 'Court is in session',     color: 'var(--text-muted)', bars: false, pulse: true },
+  [SESSION_STATES.CONNECTING]:     { label: 'Connecting to court',    color: 'var(--text-muted)', bars: false, pulse: false },
+  [SESSION_STATES.AGENT_READY]:    { label: 'Court is in session',    color: 'var(--text-muted)', bars: false, pulse: true },
   [SESSION_STATES.AGENT_SPEAKING]: { label: 'Prosecution is speaking', color: 'var(--prosecutor-border)', bars: true,  pulse: false },
-  [SESSION_STATES.USER_TURN]:      { label: 'Your turn — speak now',   color: 'var(--defense-border)', bars: false, pulse: true },
-  [SESSION_STATES.USER_SPEAKING]:  { label: 'You are speaking…',       color: 'var(--defense-border)', bars: true,  pulse: false },
-  [SESSION_STATES.PROCESSING]:     { label: 'Transcribing…',           color: 'var(--text-muted)', bars: false, pulse: false },
+  [SESSION_STATES.USER_TURN]:      { label: 'Your turn - speak now',  color: 'var(--defense-border)', bars: false, pulse: true },
+  [SESSION_STATES.USER_SPEAKING]:  { label: 'You are speaking',       color: 'var(--defense-border)', bars: true,  pulse: false },
+  [SESSION_STATES.PROCESSING]:     { label: 'Transcribing',           color: 'var(--text-muted)', bars: false, pulse: false },
   [SESSION_STATES.VERDICT]:        { label: 'Verdict delivered',        color: 'var(--text)',       bars: false, pulse: false },
   [SESSION_STATES.ERROR]:          { label: 'Connection error',         color: '#ef4444',           bars: false, pulse: false },
   [SESSION_STATES.IDLE]:           { label: 'Voice mode',               color: 'var(--text-muted)', bars: false, pulse: false },
@@ -49,7 +49,7 @@ export default function MicIndicator({ sessionState, onEnd, error }) {
           animation: cfg.pulse ? 'pulseDot 1.2s infinite' : 'none',
           color: cfg.color,
         }}>
-          {isAgentTurn ? '◉' : isUserTurn ? '🎙' : '○'}
+          {isAgentTurn ? '*' : isUserTurn ? 'mic' : '-'}
         </div>
 
         <div style={{ flex: 1 }}>
@@ -86,7 +86,7 @@ export default function MicIndicator({ sessionState, onEnd, error }) {
         </button>
       </div>
 
-      {/* Waveform — shown when either side is speaking */}
+      {/* Waveform - shown when either side is speaking */}
       {cfg.bars && (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px', height: '24px' }}>
           {Array.from({ length: 14 }).map((_, i) => (

@@ -7,7 +7,7 @@ function setCors(res) {
 }
 
 const SYSTEM_PROMPT =
-  'You are the Honorable Judge Constance Virtue. Analyze this trial transcript and return ONLY valid JSON — no preamble, no markdown fences, raw JSON only. Schema:\n{"guilty":boolean,"verdict_statement":"2-3 sentence formal pronouncement","scores":{"strength":1-10,"evidence":1-10,"logic":1-10,"persuasion":1-10},"fallacies":["Fallacy Name — DEFENSE/PROSECUTOR in [phase]: description"]}\nScoring: total >= 24 → guilty: false (Not Guilty). Override if defense was genuinely compelling or incoherent.'
+  'You are the Honorable Judge Constance Virtue. Analyze this trial transcript and return ONLY valid JSON - no preamble, no markdown fences, raw JSON only. Schema:\n{"guilty":boolean,"verdict_statement":"2-3 sentence formal pronouncement","scores":{"strength":1-10,"evidence":1-10,"logic":1-10,"persuasion":1-10},"fallacies":["Fallacy Name - DEFENSE/PROSECUTOR in [phase]: description"]}\nScoring: total >= 24 means guilty: false (Not Guilty). Override if defense was genuinely compelling or incoherent.'
 
 export default async function handler(req, res) {
   setCors(res)

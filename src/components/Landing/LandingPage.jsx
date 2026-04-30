@@ -85,7 +85,7 @@ export default function LandingPage({ onStart }) {
           onMouseEnter={e => e.currentTarget.style.opacity = '0.8'}
           onMouseLeave={e => e.currentTarget.style.opacity = '1'}
         >
-          Select Your Charge ↓
+          Select Your Charge
         </button>
       </section>
 
@@ -189,7 +189,7 @@ export default function LandingPage({ onStart }) {
           <div style={{ display: 'flex', gap: '1px', background: 'var(--border)', border: '1px solid var(--border)' }}>
             {[
               { value: 'off', label: '✍  Text', desc: 'Type your defense' },
-              { value: 'hybrid', label: '🎙  Auto Voice', desc: 'Speak your defense' },
+              { value: 'hybrid', label: 'Auto Voice', desc: 'Speak your defense' },
             ].map(opt => (
               <button
                 key={opt.value}
@@ -282,7 +282,7 @@ export default function LandingPage({ onStart }) {
               <span style={{ color: 'var(--text-muted)', fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', fontStyle: 'normal' }}>
                 Charge:{' '}
               </span>
-              {activeAccusation.length > 120 ? activeAccusation.slice(0, 120) + '…' : activeAccusation}
+              {activeAccusation.length > 120 ? activeAccusation.slice(0, 120) + '...' : activeAccusation}
             </div>
           )}
           <button
@@ -303,7 +303,7 @@ export default function LandingPage({ onStart }) {
               opacity: isLoading ? 0.6 : 1,
             }}
           >
-            {isLoading ? 'Summoning the court…' : 'Enter the Courtroom →'}
+            {isLoading ? 'Summoning the court...' : 'Enter the Courtroom'}
           </button>
         </div>
       </section>

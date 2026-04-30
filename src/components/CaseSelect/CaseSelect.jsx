@@ -41,7 +41,7 @@ export default function CaseSelect({ onStart }) {
             className="font-serif tracking-wide"
             style={{ color: '#C9A84C', fontSize: '3.5rem', lineHeight: 1.1 }}
           >
-            ⚖ ALL RISE
+            ALL RISE
           </h1>
           <p
             className="font-serif italic"
@@ -77,7 +77,7 @@ export default function CaseSelect({ onStart }) {
 
         {/* Divider */}
         <div className="text-center font-serif" style={{ color: '#C9A84C', fontSize: '13px', letterSpacing: '0.2em' }}>
-          — OR —
+          OR
         </div>
 
         {/* Custom input */}

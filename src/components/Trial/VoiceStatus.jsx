@@ -2,46 +2,46 @@ import { VOICE_MODE_STATES } from '../../hooks/useVoiceMode.js'
 
 const CONFIG = {
   [VOICE_MODE_STATES.SPEAKING]: {
-    label: (role) => role === 'judge' ? 'Judge is ruling…' : 'Prosecution is speaking…',
+    label: (role) => role === 'judge' ? 'Judge is ruling' : 'Prosecution is speaking',
     sublabel: 'Listen carefully.',
     pulse: true,
     color: 'var(--prosecutor-border)',
-    icon: '◉',
+    icon: '*',
   },
   [VOICE_MODE_STATES.LISTENING]: {
-    label: () => 'Your turn — speak your defense',
+    label: () => 'Your turn - speak your defense',
     sublabel: 'Speak clearly. Silence submits automatically.',
     pulse: true,
     color: 'var(--defense-border)',
-    icon: '⬤',
+    icon: '*',
   },
   [VOICE_MODE_STATES.PROCESSING]: {
-    label: () => 'Submitting your defense…',
+    label: () => 'Submitting your defense',
     sublabel: null,
     pulse: false,
     color: 'var(--text-muted)',
-    icon: '○',
+    icon: '-',
   },
   [VOICE_MODE_STATES.WAITING]: {
-    label: () => 'The court considers…',
+    label: () => 'The court considers',
     sublabel: null,
     pulse: false,
     color: 'var(--text-muted)',
-    icon: '○',
+    icon: '-',
   },
   [VOICE_MODE_STATES.DONE]: {
     label: () => 'Verdict delivered.',
     sublabel: null,
     pulse: false,
     color: 'var(--text)',
-    icon: '⚖',
+    icon: 'v',
   },
   [VOICE_MODE_STATES.IDLE]: {
     label: () => 'Voice mode active',
-    sublabel: 'Waiting for the court…',
+    sublabel: 'Waiting for the court',
     pulse: false,
     color: 'var(--text-muted)',
-    icon: '○',
+    icon: '-',
   },
 }
 

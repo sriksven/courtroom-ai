@@ -62,8 +62,8 @@ const CASES = [
   {
     id: 'vague-calendar-invite',
     title: 'The Vague Calendar Invite',
-    subtitle: 'Scheduling a meeting titled "Quick Chat — Important" with no description',
-    accusation: 'scheduling a calendar invitation titled "Quick Chat — Important" with no agenda, no description, and no context, causing three colleagues to spend the preceding 24 hours in a state of professional anxiety'
+    subtitle: 'Scheduling a meeting titled "Quick Chat - Important" with no description',
+    accusation: 'scheduling a calendar invitation titled "Quick Chat - Important" with no agenda, no description, and no context, causing three colleagues to spend the preceding 24 hours in a state of professional anxiety'
   },
   {
     id: 'chronic-spoiler',
