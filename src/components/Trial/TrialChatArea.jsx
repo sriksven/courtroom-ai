@@ -92,7 +92,7 @@ function PlayButton({ msgId, text, voice, player }) {
           transition: 'color 0.15s',
         }}
       >
-        {isLoading ? '...' : isPlaying ? 'II' : '>'}
+        {isLoading ? '...' : isPlaying ? 'II' : '▶'}
       </button>
       {isActive && (
         <button

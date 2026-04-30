@@ -72,6 +72,7 @@ export function getPhaseLabelDynamic(phase, round) {
   if (phase === 'VERDICT') return 'Verdict'
   if (phase === 'SETUP') return 'Case Selection'
   if (phase.startsWith('CROSS_')) return `Cross-Examination - Round ${round}`
+  if (phase.startsWith('PROSECUTION_WITNESS_')) return `Witness Testimony`
   return phase
 }
 

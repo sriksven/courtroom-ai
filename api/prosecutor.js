@@ -131,7 +131,6 @@ export default async function handler(req, res) {
 
     if (stream) {
       res.setHeader('Content-Type', 'text/plain; charset=utf-8')
-      res.setHeader('Transfer-Encoding', 'chunked')
       res.setHeader('X-Accel-Buffering', 'no')
 
       const completion = await groq.chat.completions.create({
