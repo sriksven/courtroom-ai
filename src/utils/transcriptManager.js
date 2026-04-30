@@ -1,9 +1,13 @@
 const PHASE_HEADERS = {
   OPENING: 'OPENING',
-  CROSS_1: 'ROUND 1',
-  CROSS_2: 'ROUND 2',
-  CROSS_3: 'ROUND 3',
   CLOSING: 'CLOSING',
+}
+
+function phaseHeader(phase) {
+  if (PHASE_HEADERS[phase]) return PHASE_HEADERS[phase]
+  const m = phase.match(/^CROSS_(\d+)$/)
+  if (m) return `ROUND ${m[1]}`
+  return phase
 }
 
 const ROLE_LABELS = {
@@ -29,7 +33,7 @@ export function buildFullTranscript(messages) {
 
   const sections = []
   for (const phase of phaseOrder) {
-    const header = PHASE_HEADERS[phase] || phase
+    const header = phaseHeader(phase)
     const lines = [`=== ${header} ===`]
     for (const msg of byPhase.get(phase)) {
       const label = ROLE_LABELS[msg.role] || msg.role.toUpperCase()

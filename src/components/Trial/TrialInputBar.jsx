@@ -142,7 +142,7 @@ export default function TrialInputBar() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <button
           onClick={handleHint}
-          disabled={isLoading || hintLoading}
+          disabled={isLoading || hintLoading || isClosing}
           style={{
             background: 'none',
             border: 'none',
@@ -150,9 +150,9 @@ export default function TrialInputBar() {
             fontFamily: 'Georgia, serif',
             fontSize: '12px',
             fontStyle: 'italic',
-            cursor: 'pointer',
+            cursor: isClosing ? 'default' : 'pointer',
             padding: 0,
-            opacity: isLoading || hintLoading ? 0.4 : 1,
+            opacity: isLoading || hintLoading || isClosing ? 0.4 : 1,
             display: 'flex',
             alignItems: 'center',
             gap: '4px',

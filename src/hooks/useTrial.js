@@ -128,6 +128,21 @@ async function* apiStream(path, body) {
   }
 }
 
+/** LLM sometimes returns JSON as prose, e.g. {"content":"Ladies and gentlemen..."}. Strip to spoken text. */
+function normalizeProsecutorText(raw) {
+  if (raw == null) return ''
+  const s = String(raw).trim()
+  if (!s.startsWith('{')) return String(raw)
+  try {
+    const parsed = JSON.parse(s)
+    if (typeof parsed.content === 'string' && parsed.content.trim()) return parsed.content.trim()
+    if (typeof parsed.response === 'string' && parsed.response.trim()) return parsed.response.trim()
+  } catch {
+    /* not valid JSON — show as-is */
+  }
+  return String(raw)
+}
+
 function sendViaLiveKit(room, message, expectedResponseType, timeoutMs = 15000) {
   return new Promise((resolve, reject) => {
     if (!room?.localParticipant) {
@@ -191,7 +206,12 @@ export function useTrial() {
           'prosecutor_response',
           20000,
         )
-        return { content: res.text, requestAnotherRound: res.requestAnotherRound, reason: res.reason }
+        const raw = res.text ?? res.content ?? ''
+        return {
+          content: normalizeProsecutorText(raw),
+          requestAnotherRound: res.requestAnotherRound,
+          reason: res.reason ?? '',
+        }
       } catch (err) {
         console.warn('[useTrial] LiveKit call failed, falling back to API:', err.message)
       }
@@ -200,7 +220,11 @@ export function useTrial() {
     // Dynamic mode needs JSON response - no streaming
     if (isDynamic) {
       const data = await apiPost('/api/prosecutor', { accusation, phase, history, round, isDynamic })
-      return { content: data.content, requestAnotherRound: data.requestAnotherRound ?? false, reason: data.reason ?? '' }
+      return {
+        content: normalizeProsecutorText(data.content),
+        requestAnotherRound: data.requestAnotherRound ?? false,
+        reason: data.reason ?? '',
+      }
     }
 
     // Stream fixed-mode responses
@@ -209,7 +233,9 @@ export function useTrial() {
       content += chunk
       if (onChunk) onChunk(content)
     }
-    return { content, requestAnotherRound: false, reason: '' }
+    const finalText = normalizeProsecutorText(content)
+    if (onChunk && finalText !== content) onChunk(finalText)
+    return { content: finalText, requestAnotherRound: false, reason: '' }
   }
 
   async function callJudge(accusation, messages, defenseText = '') {

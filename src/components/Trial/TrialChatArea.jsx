@@ -117,6 +117,16 @@ function PlayButton({ msgId, text, voice, player }) {
 
 // ── Loading dots ──────────────────────────────────────────────────────────────
 
+/** Some code paths store prosecutor text as stringified `{ "content": "..." }`; show the inner speech only. */
+function normalizeMessageContent(raw) {
+  if (typeof raw !== 'string' || !raw.trimStart().startsWith('{')) return raw
+  try {
+    const parsed = JSON.parse(raw)
+    if (parsed && typeof parsed.content === 'string') return parsed.content
+  } catch { /* not JSON */ }
+  return raw
+}
+
 function LoadingDots() {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '1rem', justifyContent: 'center' }}>
@@ -134,6 +144,7 @@ function LoadingDots() {
 
 function ChatBubble({ message, player }) {
   const { role, content, timestamp } = message
+  const displayContent = normalizeMessageContent(content)
 
   const formatTime = (ts) => {
     if (!ts) return ''
@@ -144,7 +155,7 @@ function ChatBubble({ message, player }) {
   if (role === 'system') {
     return (
       <div style={{ textAlign: 'center', padding: '0.5rem', color: 'var(--text-muted)', fontSize: '11px' }}>
-        {content}
+        {displayContent}
       </div>
     )
   }
@@ -162,9 +173,9 @@ function ChatBubble({ message, player }) {
           background: 'var(--judge-bg)',
         }}>
           <p style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: '14px', color: 'var(--text)', margin: 0 }}>
-            {content}
+            {displayContent}
           </p>
-          <PlayButton msgId={message.id} text={content} voice="shimmer" player={player} />
+          <PlayButton msgId={message.id} text={displayContent} voice="shimmer" player={player} />
         </div>
       </div>
     )
@@ -185,9 +196,9 @@ function ChatBubble({ message, player }) {
           lineHeight: 1.6,
           color: 'var(--text)',
         }}>
-          <p style={{ margin: 0 }}>{content}</p>
+          <p style={{ margin: 0 }}>{displayContent}</p>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <PlayButton msgId={message.id} text={content} voice="onyx" player={player} />
+            <PlayButton msgId={message.id} text={displayContent} voice="onyx" player={player} />
             {timestamp && (
               <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{formatTime(timestamp)}</span>
             )}
@@ -212,9 +223,9 @@ function ChatBubble({ message, player }) {
           lineHeight: 1.6,
           color: 'var(--text)',
         }}>
-          <p style={{ margin: 0 }}>{content}</p>
+          <p style={{ margin: 0 }}>{displayContent}</p>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexDirection: 'row-reverse' }}>
-            <PlayButton msgId={message.id} text={content} voice="alloy" player={player} />
+            <PlayButton msgId={message.id} text={displayContent} voice="alloy" player={player} />
             {timestamp && (
               <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{formatTime(timestamp)}</span>
             )}

@@ -2,13 +2,28 @@ import Groq from 'groq-sdk'
 import OpenAI from 'openai'
 import { PHASE_PROMPTS, JUDGE_SYSTEM_PROMPT, HINT_SYSTEM_PROMPT } from './prompts.js'
 
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+function normalizeProsecutorText(raw) {
+  if (raw == null) return ''
+  const s = String(raw).trim()
+  if (!s.startsWith('{')) return String(raw)
+  try {
+    const parsed = JSON.parse(s)
+    if (typeof parsed.content === 'string' && parsed.content.trim()) return parsed.content.trim()
+    if (typeof parsed.response === 'string' && parsed.response.trim()) return parsed.response.trim()
+  } catch {
+    /* keep raw */
+  }
+  return String(raw)
+}
+
+let _groq, _openai
+function getGroq() { return _groq ??= new Groq({ apiKey: process.env.GROQ_API_KEY }) }
+function getOpenAI() { return _openai ??= new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) }
 
 // Prosecutor via Groq — fast inference for voice turn-taking
 export async function runProsecutor({ accusation, phase, history = [] }) {
   const systemPrompt = PHASE_PROMPTS[phase] || PHASE_PROMPTS.OPENING
-  const completion = await groq.chat.completions.create({
+  const completion = await getGroq().chat.completions.create({
     model: 'llama-3.3-70b-versatile',
     max_tokens: 200,
     temperature: 0.85,
@@ -18,12 +33,12 @@ export async function runProsecutor({ accusation, phase, history = [] }) {
       { role: 'user', content: `Accusation: ${accusation}` },
     ],
   })
-  return completion.choices[0].message.content
+  return normalizeProsecutorText(completion.choices[0].message.content)
 }
 
 // Judge via OpenAI GPT-4o — structured JSON reliability matters more than speed
 export async function runJudge({ accusation, transcript }) {
-  const completion = await openai.chat.completions.create({
+  const completion = await getOpenAI().chat.completions.create({
     model: 'gpt-4o',
     max_tokens: 600,
     messages: [
@@ -39,7 +54,7 @@ export async function runJudge({ accusation, transcript }) {
 
 // Defense hint via Groq
 export async function runHint({ accusation, latestProsecutorStatement }) {
-  const completion = await groq.chat.completions.create({
+  const completion = await getGroq().chat.completions.create({
     model: 'llama-3.3-70b-versatile',
     max_tokens: 200,
     messages: [

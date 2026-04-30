@@ -1,5 +1,19 @@
 import Groq from 'groq-sdk'
 
+function normalizeProsecutorText(raw) {
+  if (raw == null) return ''
+  const s = String(raw).trim()
+  if (!s.startsWith('{')) return String(raw)
+  try {
+    const parsed = JSON.parse(s)
+    if (typeof parsed.content === 'string' && parsed.content.trim()) return parsed.content.trim()
+    if (typeof parsed.response === 'string' && parsed.response.trim()) return parsed.response.trim()
+  } catch {
+    /* keep raw */
+  }
+  return String(raw)
+}
+
 function setCors(res) {
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
@@ -71,7 +85,7 @@ export default async function handler(req, res) {
       }
 
       return res.status(200).json({
-        content: parsed.response ?? parsed.content ?? '',
+        content: normalizeProsecutorText(parsed.response ?? parsed.content ?? ''),
         requestAnotherRound: parsed.requestAnotherRound ?? false,
         reason: parsed.reason ?? '',
       })
@@ -88,6 +102,8 @@ export default async function handler(req, res) {
       { role: 'user', content: `Accusation: ${accusation}` },
     ]
 
+    const maxTokens = phase === 'CLOSING' ? 500 : 300
+
     if (stream) {
       res.setHeader('Content-Type', 'text/plain; charset=utf-8')
       res.setHeader('Transfer-Encoding', 'chunked')
@@ -95,7 +111,7 @@ export default async function handler(req, res) {
 
       const completion = await groq.chat.completions.create({
         model: 'llama-3.3-70b-versatile',
-        max_tokens: 300,
+        max_tokens: maxTokens,
         temperature: 0.88,
         stream: true,
         messages,
@@ -110,12 +126,12 @@ export default async function handler(req, res) {
 
     const completion = await groq.chat.completions.create({
       model: 'llama-3.3-70b-versatile',
-      max_tokens: 300,
+      max_tokens: maxTokens,
       temperature: 0.88,
       messages,
     })
-
-    return res.status(200).json({ content: completion.choices[0].message.content })
+    const raw = completion.choices[0].message.content
+    return res.status(200).json({ content: normalizeProsecutorText(raw) })
   } catch (err) {
     return res.status(500).json({ error: err.message })
   }

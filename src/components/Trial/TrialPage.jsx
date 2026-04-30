@@ -165,8 +165,8 @@ export default function TrialPage({ onVerdict, onBack, voiceModeOn, onVoiceModeC
         <span style={{ fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
           {phaseLabel}{isCross
             ? isDynamic
-              ? ` - Round ${round} - Prosecution may continue`
-              : ` - Round ${round} of ${rounds}`
+              ? ` - Prosecution may continue`
+              : ` of ${rounds}`
             : ''}
         </span>
       </div>

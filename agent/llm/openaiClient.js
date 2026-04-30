@@ -1,9 +1,10 @@
 import OpenAI from 'openai'
 
-const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+let _client
+function client() { return _client ??= new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) }
 
 export async function openaiChat({ messages, maxTokens = 600, temperature = 0.3 }) {
-  const completion = await client.chat.completions.create({
+  const completion = await client().chat.completions.create({
     model: 'gpt-4o',
     max_tokens: maxTokens,
     temperature,
@@ -36,7 +37,7 @@ const VERDICT_SCHEMA = {
 }
 
 export async function openaiVerdict({ messages }) {
-  const completion = await client.chat.completions.create({
+  const completion = await client().chat.completions.create({
     model: 'gpt-4o',
     max_tokens: 800,
     temperature: 0.2,
