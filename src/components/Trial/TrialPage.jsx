@@ -64,9 +64,9 @@ export default function TrialPage({ onVerdict, onBack, voiceModeOn, onVoiceModeC
   }
 
   const voiceLabel = {
-    off: 'Voice',
-    hybrid: 'Auto Voice',
-    full: 'Live Voice',
+    off: null,
+    hybrid: '🎙 Auto',
+    full: '🎙 Live',
   }[voiceModeOn]
 
   const isFullVoiceConnecting = voiceModeOn === 'full' &&
@@ -104,28 +104,30 @@ export default function TrialPage({ onVerdict, onBack, voiceModeOn, onVoiceModeC
             {accusation}
           </div>
 
-          {/* Voice toggle */}
-          <button
-            onClick={handleToggleVoice}
-            disabled={isFullVoiceConnecting}
-            title={voiceModeOn === 'off' ? 'Enable auto voice' : voiceModeOn === 'hybrid' ? 'Switch to live voice' : 'Disable voice'}
-            style={{
-              background: voiceModeOn !== 'off' ? 'rgba(255,255,255,0.15)' : 'none',
-              border: '1px solid rgba(255,255,255,0.3)',
-              color: 'var(--charge-text)',
-              fontSize: '12px',
-              padding: '0.2rem 0.6rem',
-              cursor: isFullVoiceConnecting ? 'wait' : 'pointer',
-              fontFamily: 'Georgia, serif',
-              whiteSpace: 'nowrap',
-              flexShrink: 0,
-            }}
-          >
-            {isFullVoiceConnecting ? '...' : voiceLabel}
-          </button>
+          {/* Voice toggle - only visible when voice is active */}
+          {voiceModeOn !== 'off' && (
+            <button
+              onClick={handleToggleVoice}
+              disabled={isFullVoiceConnecting}
+              title={voiceModeOn === 'hybrid' ? 'Switch to live voice' : 'Disable voice'}
+              style={{
+                background: 'rgba(255,255,255,0.15)',
+                border: '1px solid rgba(255,255,255,0.3)',
+                color: 'var(--charge-text)',
+                fontSize: '12px',
+                padding: '0.2rem 0.6rem',
+                cursor: isFullVoiceConnecting ? 'wait' : 'pointer',
+                fontFamily: 'Georgia, serif',
+                whiteSpace: 'nowrap',
+                flexShrink: 0,
+              }}
+            >
+              {isFullVoiceConnecting ? '...' : voiceLabel}
+            </button>
+          )}
         </div>
 
-        {/* Theme toggle — pinned to far right edge */}
+        {/* Theme toggle - pinned to far right edge */}
         <button
           onClick={onToggleTheme}
           title="Toggle theme"
@@ -135,19 +137,16 @@ export default function TrialPage({ onVerdict, onBack, voiceModeOn, onVoiceModeC
             top: '50%',
             transform: 'translateY(-50%)',
             background: 'none',
-            border: '1px solid rgba(255,255,255,0.3)',
+            border: 'none',
             color: 'var(--charge-text)',
-            width: '28px',
-            height: '28px',
-            borderRadius: '50%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '13px',
+            fontSize: '16px',
             cursor: 'pointer',
+            opacity: 0.7,
+            padding: '0 4px',
+            lineHeight: 1,
           }}
         >
-          {theme === 'light' ? 'Dark' : 'Light'}
+          {theme === 'light' ? '🌙' : '☀'}
         </button>
       </div>
 
