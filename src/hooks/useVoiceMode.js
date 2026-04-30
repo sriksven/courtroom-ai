@@ -3,11 +3,11 @@ import { PHASES } from '../constants/phases.js'
 
 export const VOICE_MODE_STATES = {
   IDLE: 'IDLE',
-  SPEAKING: 'SPEAKING',       // TTS playing
-  LISTENING: 'LISTENING',     // waiting for user speech
-  PROCESSING: 'PROCESSING',   // submitting to API
-  WAITING: 'WAITING',         // waiting for AI response
-  DONE: 'DONE',               // trial ended
+  SPEAKING: 'SPEAKING',
+  LISTENING: 'LISTENING',
+  PROCESSING: 'PROCESSING',
+  WAITING: 'WAITING',
+  DONE: 'DONE',
 }
 
 const ROLE_VOICES = {
@@ -15,8 +15,8 @@ const ROLE_VOICES = {
   judge: 'shimmer',
 }
 
-// Fetch TTS and play — returns a Promise that resolves when audio ends
-async function speakText(text, voice) {
+// Fetch TTS for a chunk and return an Audio object ready to play
+async function fetchAudio(text, voice) {
   const res = await fetch('/api/tts', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -24,33 +24,16 @@ async function speakText(text, voice) {
   })
   if (!res.ok) throw new Error('TTS failed')
   const blob = await res.blob()
-  return new Promise((resolve) => {
-    const url = URL.createObjectURL(blob)
-    const audio = new Audio(url)
-    audio.onended = () => { URL.revokeObjectURL(url); resolve() }
-    audio.onerror = () => { URL.revokeObjectURL(url); resolve() } // don't block loop on error
-    audio.play().catch(() => resolve())
-  })
+  const url = URL.createObjectURL(blob)
+  return { audio: new Audio(url), url }
 }
 
-// Listen via Web Speech API — resolves with transcript string when speech ends
-function listenOnce() {
+// Play audio, resolving when it ends
+function playAudio({ audio, url }) {
   return new Promise((resolve) => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
-    if (!SpeechRecognition) { resolve(''); return }
-
-    const recognition = new SpeechRecognition()
-    recognition.continuous = false
-    recognition.interimResults = false
-    recognition.lang = 'en-US'
-
-    let captured = ''
-    recognition.onresult = (e) => {
-      captured = Array.from(e.results).map(r => r[0].transcript).join(' ')
-    }
-    recognition.onend = () => resolve(captured)
-    recognition.onerror = () => resolve(captured)
-    recognition.start()
+    audio.onended = () => { URL.revokeObjectURL(url); resolve() }
+    audio.onerror = () => { URL.revokeObjectURL(url); resolve() }
+    audio.play().catch(() => resolve())
   })
 }
 
@@ -62,35 +45,120 @@ export function useVoiceMode({ messages, phase, submitDefense, enabled }) {
   const abortRef = useRef(false)
   const loopRunningRef = useRef(false)
   const spokenIdsRef = useRef(new Set())
-  const newMessageResolverRef = useRef(null)
-  // Keep a live ref to messages so the loop always sees the latest array
   const messagesRef = useRef(messages)
-  useEffect(() => { messagesRef.current = messages }, [messages])
   const phaseRef = useRef(phase)
-  useEffect(() => { phaseRef.current = phase }, [phase])
   const submitRef = useRef(submitDefense)
+
+  // Resolver called on every messages change (new message OR content update)
+  const onMessagesChangedRef = useRef(null)
+
+  useEffect(() => { messagesRef.current = messages }, [messages])
+  useEffect(() => { phaseRef.current = phase }, [phase])
   useEffect(() => { submitRef.current = submitDefense }, [submitDefense])
 
-  // Whenever messages change, wake up the loop if it's waiting
+  // Wake anything waiting on messages whenever they change
   useEffect(() => {
-    if (newMessageResolverRef.current) {
-      newMessageResolverRef.current()
-      newMessageResolverRef.current = null
+    if (onMessagesChangedRef.current) {
+      onMessagesChangedRef.current()
+      onMessagesChangedRef.current = null
     }
   }, [messages])
 
-  // Wait until a new unspoken prosecutor/judge message appears
+  // Wait for a message change notification
+  function waitForMessagesChange() {
+    return new Promise(resolve => {
+      onMessagesChangedRef.current = resolve
+    })
+  }
+
+  // Wait until a new unspoken AI message with non-empty content appears
   function waitForNextMessage() {
     return new Promise((resolve) => {
-      const check = () => messagesRef.current.find(
-        m => (m.role === 'prosecutor' || m.role === 'judge') && !spokenIdsRef.current.has(m.id)
-      ) ?? null
-
-      const immediate = check()
-      if (immediate) { resolve(immediate); return }
-
-      newMessageResolverRef.current = () => resolve(check())
+      function check() {
+        const msg = messagesRef.current.find(
+          m => (m.role === 'prosecutor' || m.role === 'judge') &&
+               !spokenIdsRef.current.has(m.id) &&
+               m.content.length > 0
+        )
+        if (msg) {
+          resolve(msg)
+        } else {
+          // Re-register - content hasn't arrived yet
+          onMessagesChangedRef.current = check
+        }
+      }
+      check()
     })
+  }
+
+  // Speak a streaming message sentence by sentence.
+  // Watches messagesRef for content updates, extracts complete sentences,
+  // fires TTS immediately, and queues audio so playback is continuous.
+  async function speakStreamingMessage(msgId, voice) {
+    let spokenUpTo = 0
+    // Chain of audio play Promises so sentences play in order
+    let playChain = Promise.resolve()
+    // Prefetch next sentence while current is playing
+    let prefetchPromise = null
+
+    const SENTENCE_BOUNDARY = /[.!?][)”"']?\s+/g
+
+    function extractNextSentences(content) {
+      const unspoken = content.slice(spokenUpTo)
+      let lastEnd = -1
+      SENTENCE_BOUNDARY.lastIndex = 0
+      let match
+      while ((match = SENTENCE_BOUNDARY.exec(unspoken)) !== null) {
+        lastEnd = match.index + match[0].length
+      }
+      if (lastEnd < 0) return null
+      const sentence = unspoken.slice(0, lastEnd).trim()
+      spokenUpTo += lastEnd
+      return sentence || null
+    }
+
+    function queueSentence(text) {
+      // Prefetch audio while current sentence plays
+      const fetchP = fetchAudio(text, voice).catch(() => null)
+      playChain = playChain.then(async () => {
+        if (abortRef.current) return
+        const audioObj = await fetchP
+        if (audioObj && !abortRef.current) await playAudio(audioObj)
+      })
+    }
+
+    // Drain any complete sentences from current content
+    function drainSentences(content) {
+      let sentence
+      while ((sentence = extractNextSentences(content)) !== null) {
+        queueSentence(sentence)
+      }
+    }
+
+    // Watch content as it streams in
+    while (!abortRef.current) {
+      const msg = messagesRef.current.find(m => m.id === msgId)
+      const content = msg?.content ?? ''
+
+      drainSentences(content)
+
+      // Wait for next content update OR timeout (stream probably finished)
+      const result = await Promise.race([
+        waitForMessagesChange().then(() => 'changed'),
+        new Promise(resolve => setTimeout(() => resolve('timeout'), 700)),
+      ])
+
+      if (result === 'timeout') {
+        // Stream settled — speak any remaining text
+        const finalMsg = messagesRef.current.find(m => m.id === msgId)
+        const remaining = (finalMsg?.content ?? '').slice(spokenUpTo).trim()
+        if (remaining) queueSentence(remaining)
+        break
+      }
+    }
+
+    // Wait for all queued audio to finish
+    await playChain
   }
 
   const startLoop = useCallback(async () => {
@@ -100,38 +168,36 @@ export function useVoiceMode({ messages, phase, submitDefense, enabled }) {
     spokenIdsRef.current = new Set()
 
     try {
-      // ── Infinite loop: runs until verdict or manual stop ──────────────────
       while (!abortRef.current) {
         setState(VOICE_MODE_STATES.WAITING)
 
-        // 1. Wait for the next unspoken AI message
+        // 1. Wait for next unspoken AI message (with content)
         const msg = await waitForNextMessage()
         if (!msg || abortRef.current) break
 
         spokenIdsRef.current.add(msg.id)
 
-        // 2. Speak it
+        // 2. Speak it (streaming sentence by sentence)
         setSpeakingRole(msg.role)
         setState(VOICE_MODE_STATES.SPEAKING)
         try {
-          await speakText(msg.content, ROLE_VOICES[msg.role] ?? 'onyx')
+          await speakStreamingMessage(msg.id, ROLE_VOICES[msg.role] ?? 'onyx')
         } catch {
           // TTS failure doesn't stop the loop
         }
         if (abortRef.current) break
         setSpeakingRole(null)
 
-        // 3. If this was the judge's verdict — trial over
+        // 3. Verdict - trial over
         if (phaseRef.current === PHASES.VERDICT || msg.role === 'judge') {
           setState(VOICE_MODE_STATES.DONE)
           break
         }
 
-        // 4. Listen for defense response
+        // 4. Listen for defense
         setState(VOICE_MODE_STATES.LISTENING)
         setLiveTranscript('')
 
-        // Run STT with live interim updates via a separate recognition instance
         const transcript = await new Promise((resolve) => {
           const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
           if (!SpeechRecognition) { resolve(''); return }
@@ -154,12 +220,9 @@ export function useVoiceMode({ messages, phase, submitDefense, enabled }) {
         if (abortRef.current) break
         setLiveTranscript('')
 
-        if (!transcript.trim()) {
-          // No speech detected — give another chance without looping
-          continue
-        }
+        if (!transcript.trim()) continue
 
-        // 5. Submit defense — loop will wait for next AI message at top
+        // 5. Submit defense
         setState(VOICE_MODE_STATES.PROCESSING)
         await submitRef.current(transcript)
         setState(VOICE_MODE_STATES.WAITING)
@@ -175,10 +238,9 @@ export function useVoiceMode({ messages, phase, submitDefense, enabled }) {
 
   const stop = useCallback(() => {
     abortRef.current = true
-    // Wake any pending waitForNextMessage so it can exit cleanly
-    if (newMessageResolverRef.current) {
-      newMessageResolverRef.current()
-      newMessageResolverRef.current = null
+    if (onMessagesChangedRef.current) {
+      onMessagesChangedRef.current()
+      onMessagesChangedRef.current = null
     }
     setState(VOICE_MODE_STATES.IDLE)
     setSpeakingRole(null)
@@ -186,18 +248,10 @@ export function useVoiceMode({ messages, phase, submitDefense, enabled }) {
     loopRunningRef.current = false
   }, [])
 
-  // Auto-start loop when enabled
   useEffect(() => {
-    if (enabled && !loopRunningRef.current) {
-      startLoop()
-    }
-    if (!enabled) {
-      stop()
-    }
+    if (enabled && !loopRunningRef.current) startLoop()
+    if (!enabled) stop()
   }, [enabled])
-
-  // Re-check for new messages whenever messages change (resolves the wait)
-  // Already handled by the useEffect above that calls newMessageResolverRef
 
   const isAvailable =
     typeof window !== 'undefined' &&
