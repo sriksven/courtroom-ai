@@ -46,6 +46,22 @@ The trial takes ~4 minutes. There is no guaranteed outcome. You can lose.
 
 ---
 
+## The Three Agents
+
+Most people hear "courtroom AI" and think: two sides, prosecution vs defense. The actual design is three independent agents with conflicting goals operating on the same trial:
+
+| Agent | Role | Goal |
+|---|---|---|
+| **Reginald P. Harrington III** | Prosecution | Win at all costs — invents evidence, attacks your logic, escalates each round |
+| **Judge Constance Virtue** | The Court | Find the truth impartially — silent until the end, scores both sides, detects fallacies from prosecution and defense alike |
+| **The Strategist** | Defense Assistant | Help you without doing the work — gives hints on demand, adapts to your arguing style, never argues for you |
+
+You play the fourth role: the defendant. You argue your own case.
+
+This is what makes it interesting as an engineering problem. Three agents with different models, different memory, and adversarial goals running against each other on a shared game state — and the outcome is genuinely uncertain.
+
+---
+
 ## Architecture
 
 ```
