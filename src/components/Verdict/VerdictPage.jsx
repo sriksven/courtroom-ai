@@ -65,7 +65,15 @@ export default function VerdictPage({ onNewCase, voiceModeOn }) {
   }
 
   const isGuilty = verdict?.guilty === true
-  const allFallacies = fallacies ?? verdict?.fallacies ?? []
+  const rawFallacies = fallacies ?? verdict?.fallacies ?? []
+  // The LLM sometimes returns multiple fallacies as one string. Split them.
+  const allFallacies = rawFallacies.flatMap(f => {
+    if (typeof f !== 'string') return [f]
+    // Split on patterns like "Straw Man — DEFENSE ... and False Dichotomy — ..."
+    // or newlines, or " | "
+    const parts = f.split(/\n|\s*\|\s*|(?<=[.!?])\s+(?=[A-Z][a-z]+ (?:Fallacy|Dichotomy|Man|Herring|Slippery|Appeal|Hoc)\b)/)
+    return parts.map(p => p.trim()).filter(Boolean)
+  })
 
   return (
     <div style={{ background: 'var(--bg)', color: 'var(--text)', minHeight: '100%', padding: '4rem 2rem' }}>

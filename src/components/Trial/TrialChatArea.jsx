@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState, useCallback } from 'react'
+import React, { useRef, useEffect, useState, useCallback } from 'react'
 
 // ── Playback state: only one bubble plays at a time ──────────────────────────
 
@@ -305,6 +305,28 @@ function ChatBubble({ message, player }) {
 
 // ── Main export ───────────────────────────────────────────────────────────────
 
+function PhaseDivider({ phase, round }) {
+  let label = ''
+  if (phase === 'OPENING') label = 'Opening Statement'
+  else if (phase === 'CLOSING') label = 'Closing Arguments'
+  else if (phase?.startsWith('CROSS_')) label = `Cross-Examination — Round ${round}`
+  else if (phase?.startsWith('PROSECUTION_WITNESS_')) label = `Prosecution Witness ${phase.replace('PROSECUTION_WITNESS_', '')}`
+  else if (phase?.startsWith('DEFENSE_WITNESS_')) label = `Defense Witness ${phase.replace('DEFENSE_WITNESS_', '')}`
+  else return null
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: '0.75rem',
+      margin: '1.25rem 0 1rem', opacity: 0.45,
+    }}>
+      <div style={{ flex: 1, height: '1px', background: 'var(--border)' }} />
+      <span style={{ fontSize: '9px', letterSpacing: '0.25em', textTransform: 'uppercase', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+        {label}
+      </span>
+      <div style={{ flex: 1, height: '1px', background: 'var(--border)' }} />
+    </div>
+  )
+}
+
 export default function TrialChatArea({ messages, isLoading, loadingMessage }) {
   const bottomRef = useRef(null)
   const player = useAudioPlayer()
@@ -316,9 +338,16 @@ export default function TrialChatArea({ messages, isLoading, loadingMessage }) {
   return (
     <div style={{ flex: 1, overflowY: 'auto', background: 'var(--bg)' }}>
       <div style={{ maxWidth: '720px', margin: '0 auto', padding: '1.25rem 1.5rem' }}>
-        {messages.map(msg => (
-          <ChatBubble key={msg.id} message={msg} player={player} />
-        ))}
+        {messages.map((msg, i) => {
+          const prevPhase = i > 0 ? messages[i - 1].phase : null
+          const showDivider = msg.role !== 'system' && msg.phase && msg.phase !== prevPhase
+          return (
+            <React.Fragment key={msg.id}>
+              {showDivider && <PhaseDivider phase={msg.phase} round={msg.round} />}
+              <ChatBubble message={msg} player={player} />
+            </React.Fragment>
+          )
+        })}
         {isLoading && <LoadingDots message={loadingMessage} />}
         <div style={{ height: '1rem' }} ref={bottomRef} />
       </div>

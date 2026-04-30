@@ -355,6 +355,28 @@ export function useTrial() {
 
     const updatedMessages = [...state.messages, defenseMsg]
 
+    // ── CLOSING → VERDICT (must be first — prevents any fallthrough) ──
+    if (currentPhase === 'CLOSING') {
+      dispatch({ type: 'SET_LOADING', payload: true })
+      dispatch({ type: 'SET_ERROR', payload: null })
+      try {
+        const data = await callJudge(state.accusation, updatedMessages, text)
+        dispatch({
+          type: 'VERDICT_RECEIVED',
+          payload: {
+            verdict: data.guilty !== undefined ? data : data.verdict,
+            scores: data.scores ?? null,
+            fallacies: data.fallacies ?? [],
+          },
+        })
+      } catch (err) {
+        dispatch({ type: 'SET_ERROR', payload: err.message })
+      } finally {
+        dispatch({ type: 'SET_LOADING', payload: false })
+      }
+      return
+    }
+
     // ── PROSECUTION_WITNESS phase: user cross-examines prosecution witness ──
     if (currentPhase.startsWith('PROSECUTION_WITNESS_')) {
       dispatch({ type: 'SET_LOADING', payload: true })
@@ -397,28 +419,6 @@ export function useTrial() {
             }, difficulty)
           }
         }
-      } catch (err) {
-        dispatch({ type: 'SET_ERROR', payload: err.message })
-      } finally {
-        dispatch({ type: 'SET_LOADING', payload: false })
-      }
-      return
-    }
-
-    // ── CLOSING → VERDICT ──────────────────────────────────────────
-    if (currentPhase === 'CLOSING') {
-      dispatch({ type: 'SET_LOADING', payload: true })
-      dispatch({ type: 'SET_ERROR', payload: null })
-      try {
-        const data = await callJudge(state.accusation, updatedMessages, text)
-        dispatch({
-          type: 'VERDICT_RECEIVED',
-          payload: {
-            verdict: data.guilty !== undefined ? data : data.verdict,
-            scores: data.scores ?? null,
-            fallacies: data.fallacies ?? [],
-          },
-        })
       } catch (err) {
         dispatch({ type: 'SET_ERROR', payload: err.message })
       } finally {
