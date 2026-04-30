@@ -1,8 +1,8 @@
-# ⚖ All Rise — AI Courtroom Simulation
+# All Rise — AI Courtroom Simulation
 
 > You are the defendant. The charge is absurd. The prosecutor is an AI that remembers every word you say. You have the right to remain eloquent.
 
-**🔴 Live Demo:** [courtroom-ai-eight.vercel.app](https://courtroom-ai-eight.vercel.app)
+**Live Demo:** [courtroom-ai-eight.vercel.app](https://courtroom-ai-eight.vercel.app)
 
 [![Tests](https://img.shields.io/badge/tests-79%20passing-brightgreen)](tests/)
 [![React](https://img.shields.io/badge/React-18-61dafb)](https://react.dev)
@@ -13,7 +13,7 @@
 
 ---
 
-## 👤 Team
+## Team
 
 | Name | Role |
 |---|---|
@@ -21,9 +21,9 @@
 
 ---
 
-## 🧠 What It Is
+## What It Is
 
-All Rise is a fully realized adversarial AI courtroom. You face absurd criminal charges — from stealing the concept of Monday to teaching a houseplant existential dread — and must argue your innocence across 5 structured trial phases against three independent AI agents:
+All Rise is a fully realized adversarial AI courtroom. You face real social-crime charges — from commandeering the aux cord to leaving a pan soaking for eleven days — and must argue your innocence across structured trial phases against three independent AI agents:
 
 | Agent | Model | Role |
 |---|---|---|
@@ -35,18 +35,18 @@ The trial takes ~4 minutes. There is no guaranteed outcome. You can lose.
 
 ---
 
-## 🎮 Try It
+## Try It
 
 **[→ courtroom-ai-eight.vercel.app](https://courtroom-ai-eight.vercel.app)**
 
 1. Pick a charge (or write your own)
-2. Choose **Text** or **🎙 Auto Voice** mode
-3. Argue your case across 5 phases
-4. Receive a scored verdict from the Judge
+2. Choose **Text** or **Auto Voice** mode
+3. Select 1–5 rounds or let the prosecutor decide dynamically
+4. Argue your case and receive a scored verdict from the Judge
 
 ---
 
-## 🏗 Architecture
+## Architecture
 
 ```
 Browser (React 18 + Vite) — Vercel
@@ -76,11 +76,12 @@ Browser (React 18 + Vite) — Vercel
 
 ---
 
-## ✨ Key Features
+## Key Features
 
 - **3 AI agents** with separate models, memory, and goals operating on the same trial
 - **Prosecutor ReAct loop** — recalls weaknesses, detects fallacies, tracks unused evidence, adapts strategy every round
 - **Per-trial memory** — prosecutor in round 3 knows what it said in rounds 1 and 2
+- **Fixed or dynamic rounds** — choose 1–5 rounds, or let the prosecutor decide after each cross-examination
 - **3 interaction modes** — type, auto-voice (browser STT/TTS while-loop), full live voice (LiveKit WebRTC)
 - **Play/pause/stop TTS** on every chat bubble (3 distinct voices)
 - **Judge scores 4 dimensions** — Argument Strength, Evidence, Logic, Persuasion (max 40pts; ≥24 = Not Guilty)
@@ -90,7 +91,7 @@ Browser (React 18 + Vite) — Vercel
 
 ---
 
-## 🔬 How the Prosecutor Agent Works
+## How the Prosecutor Agent Works
 
 Every round runs a **ReAct loop**:
 
@@ -112,7 +113,7 @@ The judge receives all round summaries + fallacy list + accumulated scores at ve
 
 ---
 
-## 🗂 Project Structure
+## Project Structure
 
 ```
 all-rise/
@@ -144,7 +145,7 @@ all-rise/
 
 ---
 
-## 🚀 Local Setup
+## Local Setup
 
 ### Prerequisites
 - Node.js 18+
@@ -189,7 +190,7 @@ npm run test:coverage   # with coverage report
 
 ---
 
-## 🛠 Tech Stack
+## Tech Stack
 
 | Layer | Technology |
 |---|---|
@@ -206,6 +207,6 @@ npm run test:coverage   # with coverage report
 
 ---
 
-## 📄 License
+## License
 
 MIT
