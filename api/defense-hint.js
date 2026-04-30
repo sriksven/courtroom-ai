@@ -15,23 +15,29 @@ export default async function handler(req, res) {
 
   try {
     const { accusation, latestProsecutorStatement } = req.body
-
     const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
+
+    const messages = [
+      { role: 'system', content: SYSTEM_PROMPT },
+      { role: 'user', content: `Accusation: ${accusation}\n\nLatest prosecutor statement: ${latestProsecutorStatement}` },
+    ]
+
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8')
+    res.setHeader('Transfer-Encoding', 'chunked')
+    res.setHeader('X-Accel-Buffering', 'no')
 
     const completion = await groq.chat.completions.create({
       model: 'llama-3.3-70b-versatile',
       max_tokens: 200,
-      messages: [
-        { role: 'system', content: SYSTEM_PROMPT },
-        {
-          role: 'user',
-          content: `Accusation: ${accusation}\n\nLatest prosecutor statement: ${latestProsecutorStatement}`,
-        },
-      ],
+      stream: true,
+      messages,
     })
 
-    const hints = completion.choices[0].message.content
-    return res.status(200).json({ hints })
+    for await (const chunk of completion) {
+      const text = chunk.choices[0]?.delta?.content ?? ''
+      if (text) res.write(text)
+    }
+    return res.end()
   } catch (err) {
     return res.status(500).json({ error: err.message })
   }

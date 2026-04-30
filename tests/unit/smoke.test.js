@@ -62,9 +62,20 @@ vi.mock('uuid', () => ({ v4: () => 'test-uuid-1234' }))
 
 import { useTrial } from '../../src/hooks/useTrial.js'
 
+function makeStreamBody(text) {
+  const encoded = new TextEncoder().encode(text)
+  return new ReadableStream({
+    start(controller) {
+      controller.enqueue(encoded)
+      controller.close()
+    },
+  })
+}
+
 function mockProsecutorResponse(text = 'Prosecution speaks.') {
   mockFetch.mockResolvedValueOnce({
     ok: true,
+    body: makeStreamBody(text),
     json: async () => ({ content: text }),
   })
 }

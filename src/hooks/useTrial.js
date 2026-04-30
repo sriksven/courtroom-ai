@@ -37,6 +37,14 @@ function reducer(state, action) {
     case 'ADD_MESSAGE':
       return { ...state, messages: [...state.messages, action.payload] }
 
+    case 'UPDATE_MESSAGE':
+      return {
+        ...state,
+        messages: state.messages.map(m =>
+          m.id === action.payload.id ? { ...m, content: action.payload.content } : m
+        ),
+      }
+
     case 'ADVANCE_PHASE': {
       const next = state.transitions[state.phase]
       if (!next) return state
@@ -104,6 +112,22 @@ async function apiPost(path, body) {
   return res.json()
 }
 
+async function* apiStream(path, body) {
+  const res = await fetch(path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+  if (!res.ok) throw new Error(`${path} error: ${res.status}`)
+  const reader = res.body.getReader()
+  const decoder = new TextDecoder()
+  while (true) {
+    const { done, value } = await reader.read()
+    if (done) break
+    yield decoder.decode(value, { stream: true })
+  }
+}
+
 function sendViaLiveKit(room, message, expectedResponseType, timeoutMs = 15000) {
   return new Promise((resolve, reject) => {
     if (!room?.localParticipant) {
@@ -151,7 +175,8 @@ export function useTrial() {
   function setRoom(room) { roomRef.current = room }
 
   // ── Prosecutor call ──────────────────────────────────────────────
-  async function callProsecutor(accusation, phase, messages, defenseText = '', round = 0, isDynamic = false) {
+  // onChunk: optional callback(partialContent) called as text streams in
+  async function callProsecutor(accusation, phase, messages, defenseText = '', round = 0, isDynamic = false, onChunk = null) {
     const room = roomRef.current
     const trialId = trialIdRef.current
     const history = messages
@@ -172,8 +197,19 @@ export function useTrial() {
       }
     }
 
-    const data = await apiPost('/api/prosecutor', { accusation, phase, history, round, isDynamic })
-    return { content: data.content, requestAnotherRound: data.requestAnotherRound ?? false, reason: data.reason ?? '' }
+    // Dynamic mode needs JSON response - no streaming
+    if (isDynamic) {
+      const data = await apiPost('/api/prosecutor', { accusation, phase, history, round, isDynamic })
+      return { content: data.content, requestAnotherRound: data.requestAnotherRound ?? false, reason: data.reason ?? '' }
+    }
+
+    // Stream fixed-mode responses
+    let content = ''
+    for await (const chunk of apiStream('/api/prosecutor', { accusation, phase, history, round, isDynamic, stream: true })) {
+      content += chunk
+      if (onChunk) onChunk(content)
+    }
+    return { content, requestAnotherRound: false, reason: '' }
   }
 
   async function callJudge(accusation, messages, defenseText = '') {
@@ -214,10 +250,13 @@ export function useTrial() {
     dispatch({ type: 'SET_ERROR', payload: null })
 
     try {
-      const { content } = await callProsecutor(accusation, PHASES.OPENING, [])
+      const msgId = uuidv4()
       dispatch({
         type: 'ADD_MESSAGE',
-        payload: { id: uuidv4(), role: 'prosecutor', content, timestamp: Date.now(), phase: PHASES.OPENING, round: null },
+        payload: { id: msgId, role: 'prosecutor', content: '', timestamp: Date.now(), phase: PHASES.OPENING, round: null },
+      })
+      await callProsecutor(accusation, PHASES.OPENING, [], '', 0, false, (partial) => {
+        dispatch({ type: 'UPDATE_MESSAGE', payload: { id: msgId, content: partial } })
       })
     } catch (err) {
       dispatch({ type: 'SET_ERROR', payload: err.message })
@@ -270,10 +309,10 @@ export function useTrial() {
       dispatch({ type: 'SET_LOADING', payload: true })
       dispatch({ type: 'SET_ERROR', payload: null })
       try {
-        const { content } = await callProsecutor(state.accusation, 'CLOSING', updatedMessages, text, 0, false)
-        dispatch({
-          type: 'ADD_MESSAGE',
-          payload: { id: uuidv4(), role: 'prosecutor', content, timestamp: Date.now(), phase: 'CLOSING', round: 0 },
+        const msgId = uuidv4()
+        dispatch({ type: 'ADD_MESSAGE', payload: { id: msgId, role: 'prosecutor', content: '', timestamp: Date.now(), phase: 'CLOSING', round: 0 } })
+        await callProsecutor(state.accusation, 'CLOSING', updatedMessages, text, 0, false, (partial) => {
+          dispatch({ type: 'UPDATE_MESSAGE', payload: { id: msgId, content: partial } })
         })
       } catch (err) {
         dispatch({ type: 'SET_ERROR', payload: err.message })
@@ -307,14 +346,16 @@ export function useTrial() {
         return
       }
 
+      const msgId = uuidv4()
+      dispatch({ type: 'ADD_MESSAGE', payload: { id: msgId, role: 'prosecutor', content: '', timestamp: Date.now(), phase: next.phase, round: next.round } })
       const response = await callProsecutor(
-        state.accusation, next.phase, updatedMessages, text, next.round, useDynamic
+        state.accusation, next.phase, updatedMessages, text, next.round, useDynamic,
+        useDynamic ? null : (partial) => { dispatch({ type: 'UPDATE_MESSAGE', payload: { id: msgId, content: partial } }) }
       )
-
-      dispatch({
-        type: 'ADD_MESSAGE',
-        payload: { id: uuidv4(), role: 'prosecutor', content: response.content, timestamp: Date.now(), phase: next.phase, round: next.round },
-      })
+      // For dynamic mode, the content came back as full JSON - update the placeholder
+      if (useDynamic) {
+        dispatch({ type: 'UPDATE_MESSAGE', payload: { id: msgId, content: response.content } })
+      }
 
       // Dynamic: decide next phase based on prosecutor's response
       if (useDynamic) {
@@ -322,13 +363,13 @@ export function useTrial() {
           dispatch({ type: 'ADD_DYNAMIC_ROUND', payload: { reason: response.reason } })
         } else {
           dispatch({ type: 'ADVANCE_TO_CLOSING' })
-          // Immediately get prosecutor's closing statement
-          const closing = await callProsecutor(state.accusation, 'CLOSING', [...updatedMessages, {
+          // Immediately get prosecutor's closing statement (streamed)
+          const closingId = uuidv4()
+          dispatch({ type: 'ADD_MESSAGE', payload: { id: closingId, role: 'prosecutor', content: '', timestamp: Date.now(), phase: 'CLOSING', round: 0 } })
+          await callProsecutor(state.accusation, 'CLOSING', [...updatedMessages, {
             id: 'tmp', role: 'prosecutor', content: response.content,
-          }], '', 0, false)
-          dispatch({
-            type: 'ADD_MESSAGE',
-            payload: { id: uuidv4(), role: 'prosecutor', content: closing.content, timestamp: Date.now(), phase: 'CLOSING', round: 0 },
+          }], '', 0, false, (partial) => {
+            dispatch({ type: 'UPDATE_MESSAGE', payload: { id: closingId, content: partial } })
           })
         }
       } else {
@@ -342,7 +383,8 @@ export function useTrial() {
   }, [state])
 
   // ── requestHint ──────────────────────────────────────────────────
-  const requestHint = useCallback(async () => {
+  // onChunk: callback(partialText) called as hint streams in
+  const requestHint = useCallback(async (onChunk) => {
     const lastProsecutorMsg = [...state.messages].reverse().find(m => m.role === 'prosecutor')
     if (!lastProsecutorMsg) return null
     const room = roomRef.current
@@ -358,11 +400,15 @@ export function useTrial() {
           return res.hints
         } catch { /* fall through */ }
       }
-      const data = await apiPost('/api/defense-hint', {
+      let hint = ''
+      for await (const chunk of apiStream('/api/defense-hint', {
         accusation: state.accusation,
         latestProsecutorStatement: lastProsecutorMsg.content,
-      })
-      return data.hints ?? data.hint ?? ''
+      })) {
+        hint += chunk
+        if (onChunk) onChunk(hint)
+      }
+      return hint
     } catch (err) {
       dispatch({ type: 'SET_ERROR', payload: err.message })
       return null

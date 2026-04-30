@@ -46,11 +46,11 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end()
 
   try {
-    const { accusation, phase, history = [], round = 0, isDynamic = false } = req.body
+    const { accusation, phase, history = [], round = 0, isDynamic = false, stream = false } = req.body
     const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
     const isCrossPhase = phase?.startsWith('CROSS_')
 
-    // Dynamic cross-examination - return JSON with continue/close decision
+    // Dynamic cross-examination - return JSON with continue/close decision (no streaming)
     if (isDynamic && isCrossPhase) {
       const completion = await groq.chat.completions.create({
         model: 'llama-3.3-70b-versatile',
@@ -77,7 +77,7 @@ export default async function handler(req, res) {
       })
     }
 
-    // Fixed mode or non-cross phases - plain text
+    // Fixed mode or non-cross phases
     const systemPrompt = isCrossPhase
       ? getCrossPrompt(round)
       : (PHASE_PROMPTS[phase] ?? PHASE_PROMPTS.OPENING)
@@ -87,6 +87,26 @@ export default async function handler(req, res) {
       ...history,
       { role: 'user', content: `Accusation: ${accusation}` },
     ]
+
+    if (stream) {
+      res.setHeader('Content-Type', 'text/plain; charset=utf-8')
+      res.setHeader('Transfer-Encoding', 'chunked')
+      res.setHeader('X-Accel-Buffering', 'no')
+
+      const completion = await groq.chat.completions.create({
+        model: 'llama-3.3-70b-versatile',
+        max_tokens: 300,
+        temperature: 0.88,
+        stream: true,
+        messages,
+      })
+
+      for await (const chunk of completion) {
+        const text = chunk.choices[0]?.delta?.content ?? ''
+        if (text) res.write(text)
+      }
+      return res.end()
+    }
 
     const completion = await groq.chat.completions.create({
       model: 'llama-3.3-70b-versatile',

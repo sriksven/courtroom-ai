@@ -25,9 +25,12 @@ export default function TrialInputBar() {
 
   async function handleHint() {
     setHintLoading(true)
+    setHintText('')
     try {
-      const hint = await requestHint()
-      if (hint) setHintText(hint)
+      await requestHint((partial) => {
+        setHintText(partial)
+        setHintLoading(false)
+      })
     } finally {
       setHintLoading(false)
     }
