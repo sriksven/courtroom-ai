@@ -1,5 +1,8 @@
 export function useScoring(scores) {
-  if (!scores) return { total: 0, percentage: 0, grade: 'N/A', breakdown: [] }
+  if (!scores) return { total: 0, percentage: 0, grade: 'N/A', breakdown: null, ready: false }
+
+  const hasRealScores = Object.values(scores).some(v => v > 0)
+  if (!hasRealScores) return { total: 0, percentage: 0, grade: 'N/A', breakdown: null, ready: false }
 
   const { strength = 0, evidence = 0, logic = 0, persuasion = 0 } = scores
   const total = strength + evidence + logic + persuasion
@@ -17,5 +20,5 @@ export function useScoring(scores) {
     { label: 'Persuasion', value: persuasion, description: 'Overall persuasive effect on the court' },
   ]
 
-  return { total, percentage, grade, breakdown }
+  return { total, percentage, grade, breakdown, ready: true }
 }

@@ -35,7 +35,7 @@ function ScoreItem({ label, value, description, delay }) {
 
 export default function VerdictPage({ onNewCase, voiceModeOn }) {
   const { verdict, fallacies, dynamicRoundReasons, resetTrial } = useTrialContext()
-  const { total, percentage, grade, breakdown } = useScoring(verdict?.scores)
+  const { total, percentage, grade, breakdown, ready: scoresReady } = useScoring(verdict?.scores)
   const [revealed, setRevealed] = useState(false)
 
   useEffect(() => {
@@ -124,6 +124,19 @@ export default function VerdictPage({ onNewCase, voiceModeOn }) {
           <div style={{ fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '1rem' }}>
             Defense Performance
           </div>
+          {!scoresReady ? (
+            <div style={{
+              padding: '1.5rem',
+              border: '1px solid var(--border)',
+              background: 'var(--bg-card)',
+              fontSize: '13px',
+              fontStyle: 'italic',
+              color: 'var(--text-muted)',
+              textAlign: 'center',
+            }}>
+              Calculating scores...
+            </div>
+          ) : (
           <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(2, 1fr)',
@@ -142,9 +155,10 @@ export default function VerdictPage({ onNewCase, voiceModeOn }) {
               />
             ))}
           </div>
+          )}
 
           {/* Total bar */}
-          <div style={{
+          {scoresReady && <div style={{
             padding: '1rem',
             border: '1px solid var(--border)',
             background: 'var(--bg-card)',
@@ -171,7 +185,7 @@ export default function VerdictPage({ onNewCase, voiceModeOn }) {
                 transition: 'width 1s ease 0.3s',
               }} />
             </div>
-          </div>
+          </div>}
         </div>
 
         {/* Dynamic round reasons */}
