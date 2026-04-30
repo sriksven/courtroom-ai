@@ -1,64 +1,76 @@
 const CASES = [
   {
-    id: 'case-001',
-    title: 'The Monday Heist',
-    accusation: 'Accused of stealing the concept of Monday from the collective consciousness of mankind, leaving millions unable to feel appropriate dread on Sunday evenings.',
+    id: 'unsolicited-life-advice',
+    title: 'Unsolicited Life Advice',
+    subtitle: "Dispensing wisdom nobody asked for at a stranger's dinner table",
+    accusation: "dispensing unsolicited life advice to a complete stranger at a dinner party, causing emotional distress and a deeply uncomfortable silence"
   },
   {
-    id: 'case-002',
-    title: 'Unlicensed Philosophy',
-    accusation: 'Charged with impersonating a licensed philosopher without a PhD — specifically, deploying the phrase "but what even is reality?" at a neighborhood barbecue.',
+    id: 'spotify-incident',
+    title: 'The Spotify Incident',
+    subtitle: "Playing your own playlist at someone else's pregame",
+    accusation: "commandeering the aux cord at another person's pregame and replacing the host's carefully curated playlist with your own without consent"
   },
   {
-    id: 'case-003',
-    title: 'The Existential Houseplant',
-    accusation: 'Accused of teaching a houseplant to feel existential dread, resulting in a fiddle-leaf fig that refuses to photosynthesize and has begun writing in a tiny journal.',
+    id: 'aggressive-meal-prepping',
+    title: 'Aggressive Meal Prepping',
+    subtitle: "Occupying 80% of shared fridge space with identical tupperware",
+    accusation: "willfully occupying 80% of a shared refrigerator with twelve identical tupperware containers of meal-prepped chicken and rice, rendering the fridge unusable by other residents"
   },
   {
-    id: 'case-004',
-    title: 'Dramatic Pause Abuse',
-    accusation: 'Charged with unauthorized use of the dramatic pause in casual conversation, causing unnecessary tension at coffee shops, dinner tables, and one particularly memorable PTA meeting.',
+    id: 'wifi-password-withholding',
+    title: 'Wifi Password Withholding',
+    subtitle: "Deliberately making guests ask twice",
+    accusation: "deliberately withholding the wifi password from guests, forcing them to ask a second time after you pretended not to hear the first request"
   },
   {
-    id: 'case-005',
-    title: 'Unlicensed Emotion',
-    accusation: 'Accused of inventing a new emotion — specifically "the warm shame of enjoying elevator music unironically" — without submitting the proper forms to the Department of Feelings.',
+    id: 'phantom-typing',
+    title: 'Phantom Typing',
+    subtitle: 'Appearing to type for 45 seconds then sending "ok"',
+    accusation: 'activating the typing indicator for 45 seconds across three separate occasions, generating significant emotional anticipation, then sending only the word "ok"'
   },
   {
-    id: 'case-006',
-    title: 'The Pigeon Incident',
-    accusation: 'Charged with making sustained, unblinking eye contact with a pigeon for an unsettling length of time, resulting in said pigeon filing a restraining order.',
+    id: 'reply-all-massacre',
+    title: 'The Reply All Massacre',
+    subtitle: "Triggering a 34-person email chain about office snacks",
+    accusation: "initiating a Reply All email chain involving 34 colleagues that began as a snack inventory question and escalated over four days into a philosophical debate about communal responsibility"
   },
   {
-    id: 'case-007',
-    title: 'Suspicious Penmanship',
-    accusation: 'Accused of possessing a suspiciously perfect handwriting style in a digital age — raising serious questions about what the defendant is overcompensating for and who they are trying to impress.',
+    id: 'unsanctioned-napping',
+    title: 'Unsanctioned Napping',
+    subtitle: "Falling asleep during a conversation and denying it",
+    accusation: "falling fully asleep during a one-on-one conversation, producing audible breathing patterns consistent with sleep, then upon waking denying any loss of consciousness had occurred"
   },
   {
-    id: 'case-008',
-    title: 'Chronic Time Theft',
-    accusation: 'Charged with time theft — specifically, taking exactly 12 minutes longer than stated in every estimate across a four-year period, amounting to 11.6 stolen hours from coworkers and loved ones.',
+    id: 'serial-dish-soaker',
+    title: 'Serial Dish Soaker',
+    subtitle: "Leaving one pan soaking for eleven consecutive days",
+    accusation: "placing a single non-stick pan in the sink under the pretense of soaking and leaving it undisturbed for eleven consecutive days, blocking sink access for all other household members"
   },
   {
-    id: 'case-009',
-    title: 'The Quick Question Weapon',
-    accusation: 'Accused of weaponizing the phrase "just a quick question" in workplace settings, deploying it as cover for inquiries that routinely consume 45 minutes and the will to live.',
+    id: 'motivational-ambush',
+    title: 'Motivational Ambush',
+    subtitle: "Sending an unprompted 6am inspirational quote to a group chat",
+    accusation: "sending an unsolicited motivational quote to a 14-person group chat at 6:03am on a Saturday, waking multiple members and sparking a debate about whether hustle culture is a net negative"
   },
   {
-    id: 'case-010',
-    title: 'Pre-Coffee Confidence',
-    accusation: 'Charged with exceeding the legally permitted level of confidence for someone who has not yet had coffee — specifically, issuing strong opinions about geopolitics at 7:42 AM.',
+    id: 'grocery-store-gridlock',
+    title: 'Grocery Store Gridlock',
+    subtitle: "Parking a cart diagonally and making eye contact while doing it",
+    accusation: "positioning a shopping cart diagonally across a grocery store aisle, creating a full blockage, and maintaining direct eye contact with an approaching shopper for seven seconds without moving"
   },
   {
-    id: 'case-011',
-    title: 'The Oxford Comma Conspiracy',
-    accusation: 'Accused of gaslighting the Oxford comma into questioning its own existence by alternating its usage at random, sending the grammar community into open civil war.',
+    id: 'vague-calendar-invite',
+    title: 'The Vague Calendar Invite',
+    subtitle: 'Scheduling a meeting titled "Quick Chat — Important" with no description',
+    accusation: 'scheduling a calendar invitation titled "Quick Chat — Important" with no agenda, no description, and no context, causing three colleagues to spend the preceding 24 hours in a state of professional anxiety'
   },
   {
-    id: 'case-012',
-    title: 'Aggravated Mediocrity',
-    accusation: 'Charged with being aggressively mediocre in a jurisdiction that requires either excellence or spectacular failure — the defendant\'s persistent adequacy has been described as "an offense against narrative."',
-  },
+    id: 'chronic-spoiler',
+    title: 'Chronic Spoiler',
+    subtitle: 'Describing a plot twist as "not really a spoiler" then spoiling it',
+    accusation: 'preemptively describing a major plot revelation as "not really a spoiler, more of a vibe thing" before proceeding to describe the exact plot twist in complete detail'
+  }
 ]
 
 export default CASES

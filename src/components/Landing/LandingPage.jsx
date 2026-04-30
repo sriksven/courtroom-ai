@@ -7,6 +7,8 @@ export default function LandingPage({ onStart }) {
   const [selectedId, setSelectedId] = useState(null)
   const [customText, setCustomText] = useState('')
   const [mode, setMode] = useState('off') // 'off' | 'hybrid'
+  const [selectedRounds, setSelectedRounds] = useState(3)
+  const [isDynamic, setIsDynamic] = useState(false)
   const casesRef = useRef(null)
 
   const activeAccusation = customText.trim()
@@ -19,7 +21,8 @@ export default function LandingPage({ onStart }) {
 
   async function handleStart() {
     if (!canStart || isLoading) return
-    await startTrial(activeAccusation)
+    const rounds = isDynamic ? 'dynamic' : selectedRounds
+    await startTrial(activeAccusation, rounds)
     onStart(mode)
   }
 
@@ -128,7 +131,12 @@ export default function LandingPage({ onStart }) {
                 if (selectedId !== c.id) e.currentTarget.style.background = 'var(--bg)'
               }}
             >
-              {c.title}
+              <div>{c.title}</div>
+              {c.subtitle && (
+                <div style={{ fontSize: '11px', opacity: 0.65, marginTop: '3px', fontStyle: 'italic', lineHeight: 1.3 }}>
+                  {c.subtitle}
+                </div>
+              )}
             </button>
           ))}
         </div>
@@ -205,6 +213,57 @@ export default function LandingPage({ onStart }) {
               </button>
             ))}
           </div>
+        </div>
+
+        {/* Round selector */}
+        <div style={{ marginTop: '1.5rem' }}>
+          <div style={{ fontSize: '10px', letterSpacing: '0.3em', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.75rem' }}>
+            Rounds
+          </div>
+          <div style={{ display: 'flex', gap: '6px' }}>
+            {[1, 2, 3, 4, 5].map(n => (
+              <button
+                key={n}
+                onClick={() => { setSelectedRounds(n); setIsDynamic(false) }}
+                style={{
+                  flex: 1,
+                  padding: '0.5rem',
+                  background: !isDynamic && selectedRounds === n ? 'var(--accent)' : 'var(--bg)',
+                  color: !isDynamic && selectedRounds === n ? 'var(--accent-text)' : 'var(--text)',
+                  border: '1px solid var(--border)',
+                  fontFamily: 'Georgia, serif',
+                  fontSize: '13px',
+                  cursor: 'pointer',
+                  transition: 'background 0.15s, color 0.15s',
+                }}
+              >
+                {n}
+              </button>
+            ))}
+            <button
+              onClick={() => setIsDynamic(true)}
+              style={{
+                flex: 2,
+                padding: '0.5rem 0.75rem',
+                background: isDynamic ? 'var(--accent)' : 'var(--bg)',
+                color: isDynamic ? 'var(--accent-text)' : 'var(--text)',
+                border: '1px solid var(--border)',
+                fontFamily: 'Georgia, serif',
+                fontSize: '12px',
+                fontStyle: 'italic',
+                cursor: 'pointer',
+                transition: 'background 0.15s, color 0.15s',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              Dynamic
+            </button>
+          </div>
+          {isDynamic && (
+            <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '6px', letterSpacing: '0.02em' }}>
+              The prosecutor decides when enough is enough. Up to 6 rounds.
+            </div>
+          )}
         </div>
 
         {/* Start button */}

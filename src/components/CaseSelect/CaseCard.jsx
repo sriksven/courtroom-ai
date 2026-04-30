@@ -1,6 +1,4 @@
 export default function CaseCard({ caseData, isSelected, onClick }) {
-  const caseNumber = caseData.id.replace('case-', 'CASE NO. ').toUpperCase();
-
   return (
     <div
       onClick={onClick}
@@ -21,27 +19,34 @@ export default function CaseCard({ caseData, isSelected, onClick }) {
         style={{ width: '3px', background: '#8B1A1A' }}
       />
 
-      {/* Case number */}
-      <div
-        className="font-mono text-xs mb-2 tracking-widest"
-        style={{ color: '#C9A84C', fontSize: '10px' }}
-      >
-        {caseNumber}
-      </div>
-
-      {/* Accusation text */}
+      {/* Title */}
       <p
         className="font-serif leading-snug"
         style={{
           color: '#F5F0E8',
           fontSize: '14px',
+          marginBottom: '4px',
+          lineHeight: 1.3,
+        }}
+      >
+        {caseData.title}
+      </p>
+
+      {/* Subtitle */}
+      <p
+        className="font-serif"
+        style={{
+          color: '#a89070',
+          fontSize: '11px',
+          lineHeight: 1.4,
+          fontStyle: 'italic',
           display: '-webkit-box',
-          WebkitLineClamp: 3,
+          WebkitLineClamp: 2,
           WebkitBoxOrient: 'vertical',
           overflow: 'hidden',
         }}
       >
-        {caseData.accusation}
+        {caseData.subtitle}
       </p>
     </div>
   );

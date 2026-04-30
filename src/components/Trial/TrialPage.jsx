@@ -3,7 +3,7 @@ import { useTrialContext } from '../../context/TrialContext.jsx'
 import { useVoice } from '../../hooks/useVoice.js'
 import { useVoiceMode } from '../../hooks/useVoiceMode.js'
 import { useVoicePipeline, SESSION_STATES } from '../../hooks/useVoicePipeline.js'
-import { PHASES, PHASE_LABELS, CROSS_PHASES } from '../../constants/phases.js'
+import { PHASES, getPhaseLabelDynamic, getProgress } from '../../constants/phases.js'
 import TrialChatArea from './TrialChatArea.jsx'
 import TrialInputBar from './TrialInputBar.jsx'
 import VoiceStatus from './VoiceStatus.jsx'
@@ -11,7 +11,7 @@ import MicIndicator from './MicIndicator.jsx'
 
 // voiceModeOn: 'off' | 'hybrid' | 'full'
 export default function TrialPage({ onVerdict, onBack, voiceModeOn, onVoiceModeChange, theme, onToggleTheme }) {
-  const { messages, isLoading, phase, round, accusation, submitDefense, verdict } = useTrialContext()
+  const { messages, isLoading, phase, round, rounds, isDynamic, phaseOrder, accusation, submitDefense, verdict } = useTrialContext()
 
   // Voice input for hybrid mode (STT only — TTS is manual via play buttons)
   const { isAvailable: voiceInputAvailable } = useVoice({ onTranscript: () => {}, enabled: false })
@@ -45,13 +45,9 @@ export default function TrialPage({ onVerdict, onBack, voiceModeOn, onVoiceModeC
     if (phase === PHASES.VERDICT) onVerdict()
   }, [phase])
 
-  const isCross = CROSS_PHASES.includes(phase)
-  const phaseLabel = PHASE_LABELS[phase] || phase
-  const phaseProgress = {
-    [PHASES.SETUP]: 0, [PHASES.OPENING]: 20, [PHASES.CROSS_1]: 40,
-    [PHASES.CROSS_2]: 55, [PHASES.CROSS_3]: 70, [PHASES.CLOSING]: 88, [PHASES.VERDICT]: 100,
-  }
-  const progress = phaseProgress[phase] ?? 0
+  const isCross = phase?.startsWith('CROSS_')
+  const phaseLabel = getPhaseLabelDynamic(phase, round)
+  const progress = getProgress(phase, phaseOrder)
 
   function handleToggleVoice() {
     if (voiceModeOn === 'off') {
@@ -168,7 +164,11 @@ export default function TrialPage({ onVerdict, onBack, voiceModeOn, onVoiceModeC
         padding: '0.5rem 1.25rem',
       }}>
         <span style={{ fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
-          {phaseLabel}{isCross ? ` · Round ${round} of 3` : ''}
+          {phaseLabel}{isCross
+            ? isDynamic
+              ? ` · Round ${round} — Prosecution may continue`
+              : ` · Round ${round} of ${rounds}`
+            : ''}
         </span>
       </div>
       </div>

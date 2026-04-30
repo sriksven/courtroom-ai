@@ -34,7 +34,7 @@ function ScoreItem({ label, value, description, delay }) {
 }
 
 export default function VerdictPage({ onNewCase, voiceModeOn }) {
-  const { verdict, fallacies, resetTrial } = useTrialContext()
+  const { verdict, fallacies, dynamicRoundReasons, resetTrial } = useTrialContext()
   const { total, percentage, grade, breakdown } = useScoring(verdict?.scores)
   const [revealed, setRevealed] = useState(false)
 
@@ -173,6 +173,30 @@ export default function VerdictPage({ onNewCase, voiceModeOn }) {
             </div>
           </div>
         </div>
+
+        {/* Dynamic round reasons */}
+        {dynamicRoundReasons?.length > 0 && (
+          <div>
+            <div style={{ fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '1rem' }}>
+              Why the Prosecution Extended
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              {dynamicRoundReasons.map((reason, i) => (
+                <div key={i} style={{
+                  padding: '0.6rem 1rem',
+                  borderLeft: '2px solid var(--border)',
+                  background: 'var(--bg-card)',
+                  fontSize: '12px',
+                  fontStyle: 'italic',
+                  color: 'var(--text-muted)',
+                  lineHeight: 1.5,
+                }}>
+                  Round {i + 2}: {reason}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Fallacies */}
         {allFallacies.length > 0 && (
