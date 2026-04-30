@@ -9,6 +9,9 @@ export default function LandingPage({ onStart }) {
   const [mode, setMode] = useState('off') // 'off' | 'hybrid'
   const [selectedRounds, setSelectedRounds] = useState(3)
   const [isDynamic, setIsDynamic] = useState(false)
+  const [difficulty, setDifficulty] = useState('normal')
+  const [topicInput, setTopicInput] = useState('')
+  const [generatingCharge, setGeneratingCharge] = useState(false)
   const casesRef = useRef(null)
 
   const activeAccusation = customText.trim()
@@ -22,8 +25,27 @@ export default function LandingPage({ onStart }) {
   async function handleStart() {
     if (!canStart || isLoading) return
     const rounds = isDynamic ? 'dynamic' : selectedRounds
-    await startTrial(activeAccusation, rounds)
+    await startTrial(activeAccusation, rounds, difficulty)
     onStart(mode)
+  }
+
+  async function handleGenerateCharge() {
+    if (!topicInput.trim() || generatingCharge) return
+    setGeneratingCharge(true)
+    try {
+      const res = await fetch('/api/generate-charge', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ topic: topicInput.trim() }),
+      })
+      const data = await res.json()
+      if (data.charge) {
+        setCustomText(data.charge)
+        setSelectedId(null)
+      }
+    } catch { /* ignore */ } finally {
+      setGeneratingCharge(false)
+    }
   }
 
   function scrollToCases() {
@@ -141,8 +163,52 @@ export default function LandingPage({ onStart }) {
           ))}
         </div>
 
-        {/* Custom input */}
+        {/* AI charge generator */}
         <div style={{ margin: '3rem 0 0' }}>
+          <div style={{ fontSize: '10px', letterSpacing: '0.3em', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.75rem' }}>
+            Or generate a charge from a topic
+          </div>
+          <div style={{ display: 'flex', gap: '1px', background: 'var(--border)', border: '1px solid var(--border)' }}>
+            <input
+              value={topicInput}
+              onChange={e => setTopicInput(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleGenerateCharge()}
+              placeholder="e.g. coffee, parking, group chats..."
+              style={{
+                flex: 1,
+                padding: '0.75rem 1rem',
+                background: 'var(--bg-card)',
+                border: 'none',
+                color: 'var(--text)',
+                fontFamily: 'Georgia, serif',
+                fontSize: '14px',
+                outline: 'none',
+              }}
+            />
+            <button
+              onClick={handleGenerateCharge}
+              disabled={!topicInput.trim() || generatingCharge}
+              style={{
+                padding: '0.75rem 1.25rem',
+                background: topicInput.trim() && !generatingCharge ? 'var(--accent)' : 'var(--bg-secondary)',
+                color: topicInput.trim() && !generatingCharge ? 'var(--accent-text)' : 'var(--text-muted)',
+                border: 'none',
+                fontFamily: 'Georgia, serif',
+                fontSize: '12px',
+                letterSpacing: '0.15em',
+                textTransform: 'uppercase',
+                cursor: topicInput.trim() && !generatingCharge ? 'pointer' : 'not-allowed',
+                whiteSpace: 'nowrap',
+                flexShrink: 0,
+              }}
+            >
+              {generatingCharge ? 'Drafting...' : 'Generate Charge'}
+            </button>
+          </div>
+        </div>
+
+        {/* Custom input */}
+        <div style={{ margin: '1.5rem 0 0' }}>
           <div style={{
             fontSize: '10px',
             letterSpacing: '0.3em',
@@ -261,9 +327,44 @@ export default function LandingPage({ onStart }) {
           </div>
           {isDynamic && (
             <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '6px', letterSpacing: '0.02em' }}>
-              The prosecutor decides when enough is enough. Up to 6 rounds.
+              The prosecutor decides when enough is enough. Up to 10 rounds.
             </div>
           )}
+        </div>
+
+        {/* Difficulty selector */}
+        <div style={{ marginTop: '1.5rem' }}>
+          <div style={{ fontSize: '10px', letterSpacing: '0.3em', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.75rem' }}>
+            Difficulty
+          </div>
+          <div style={{ display: 'flex', gap: '1px', background: 'var(--border)', border: '1px solid var(--border)' }}>
+            {[
+              { value: 'easy', label: 'Easy', desc: 'Reginald is a bit sloppy today' },
+              { value: 'normal', label: 'Normal', desc: 'Standard theatrical prosecution' },
+              { value: 'hard', label: 'Hard', desc: 'Ruthless. Uses your words against you.' },
+            ].map(opt => (
+              <button
+                key={opt.value}
+                onClick={() => setDifficulty(opt.value)}
+                style={{
+                  flex: 1,
+                  padding: '0.75rem 0.5rem',
+                  background: difficulty === opt.value ? 'var(--accent)' : 'var(--bg)',
+                  color: difficulty === opt.value ? 'var(--accent-text)' : 'var(--text)',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontFamily: 'Georgia, serif',
+                  textAlign: 'center',
+                  transition: 'background 0.15s, color 0.15s',
+                }}
+                onMouseEnter={e => { if (difficulty !== opt.value) e.currentTarget.style.background = 'var(--bg-secondary)' }}
+                onMouseLeave={e => { if (difficulty !== opt.value) e.currentTarget.style.background = 'var(--bg)' }}
+              >
+                <div style={{ fontSize: '13px', marginBottom: '2px' }}>{opt.label}</div>
+                <div style={{ fontSize: '10px', opacity: 0.7, fontStyle: 'italic' }}>{opt.desc}</div>
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Start button */}

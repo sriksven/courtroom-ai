@@ -127,11 +127,11 @@ function normalizeMessageContent(raw) {
   return raw
 }
 
-function LoadingDots() {
+function LoadingDots({ message }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '1rem', justifyContent: 'center' }}>
       <span style={{ fontSize: '12px', color: 'var(--text-muted)', fontStyle: 'italic' }}>
-        The court deliberates
+        {message || 'The court deliberates'}
       </span>
       {[0, 1, 2].map(i => (
         <span key={i} className="loading-dot" style={{ animationDelay: `${i * 0.15}s` }} />
@@ -163,8 +163,8 @@ function ChatBubble({ message, player }) {
   if (role === 'judge') {
     return (
       <div className="bubble-in" style={{ textAlign: 'center', padding: '1rem 2rem', margin: '0.5rem 0' }}>
-        <div style={{ fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '4px' }}>
-          The Court
+        <div style={{ fontSize: '10px', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '4px' }}>
+          Judge Constance Virtue
         </div>
         <div style={{
           borderLeft: '2px solid var(--judge-border)',
@@ -184,8 +184,8 @@ function ChatBubble({ message, player }) {
   if (role === 'prosecutor') {
     return (
       <div className="bubble-in" style={{ maxWidth: '80%', marginBottom: '0.75rem' }}>
-        <div style={{ fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--prosecutor-border)', marginBottom: '4px' }}>
-          Prosecution
+        <div style={{ fontSize: '10px', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--prosecutor-border)', marginBottom: '4px' }}>
+          Reginald P. Harrington III
         </div>
         <div style={{
           borderLeft: '2px solid var(--prosecutor-border)',
@@ -211,8 +211,8 @@ function ChatBubble({ message, player }) {
   if (role === 'defense') {
     return (
       <div className="bubble-in" style={{ maxWidth: '80%', marginLeft: 'auto', marginBottom: '0.75rem' }}>
-        <div style={{ fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--defense-border)', marginBottom: '4px', textAlign: 'right' }}>
-          Defense
+        <div style={{ fontSize: '10px', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--defense-border)', marginBottom: '4px', textAlign: 'right' }}>
+          The Defendant
         </div>
         <div style={{
           borderRight: '2px solid var(--defense-border)',
@@ -240,7 +240,7 @@ function ChatBubble({ message, player }) {
 
 // ── Main export ───────────────────────────────────────────────────────────────
 
-export default function TrialChatArea({ messages, isLoading }) {
+export default function TrialChatArea({ messages, isLoading, loadingMessage }) {
   const bottomRef = useRef(null)
   const player = useAudioPlayer()
 
@@ -254,7 +254,7 @@ export default function TrialChatArea({ messages, isLoading }) {
         {messages.map(msg => (
           <ChatBubble key={msg.id} message={msg} player={player} />
         ))}
-        {isLoading && <LoadingDots />}
+        {isLoading && <LoadingDots message={loadingMessage} />}
         <div style={{ height: '1rem' }} ref={bottomRef} />
       </div>
     </div>

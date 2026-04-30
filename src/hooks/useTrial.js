@@ -3,6 +3,8 @@ import { v4 as uuidv4 } from 'uuid'
 import { PHASES, DEFAULT_ROUNDS, DYNAMIC_HARD_CAP, COURT_INTERVENTION_ROUND, buildPhaseOrder, buildPhaseTransitions } from '../constants/phases.js'
 import { buildFullTranscript } from '../utils/transcriptManager.js'
 
+export const MAX_HINTS = 3
+
 const initialState = {
   phase: PHASES.SETUP,
   accusation: null,
@@ -10,12 +12,14 @@ const initialState = {
   round: 0,
   rounds: DEFAULT_ROUNDS,       // number | 'dynamic'
   isDynamic: false,
+  difficulty: 'normal',         // 'easy' | 'normal' | 'hard'
   phaseOrder: buildPhaseOrder(DEFAULT_ROUNDS),
   transitions: buildPhaseTransitions(DEFAULT_ROUNDS),
   dynamicRoundReasons: [],      // why the prosecutor requested each extra round
   verdict: null,
   scores: null,
   fallacies: [],
+  hintsUsed: 0,
   isLoading: false,
   error: null,
 }
@@ -29,10 +33,15 @@ function reducer(state, action) {
         accusation: action.payload.accusation,
         rounds: action.payload.rounds,
         isDynamic: action.payload.isDynamic,
+        difficulty: action.payload.difficulty,
         phaseOrder: action.payload.phaseOrder,
         transitions: action.payload.transitions,
         dynamicRoundReasons: [],
+        hintsUsed: 0,
       }
+
+    case 'USE_HINT':
+      return { ...state, hintsUsed: state.hintsUsed + 1 }
 
     case 'ADD_MESSAGE':
       return { ...state, messages: [...state.messages, action.payload] }
@@ -191,7 +200,7 @@ export function useTrial() {
 
   // ── Prosecutor call ──────────────────────────────────────────────
   // onChunk: optional callback(partialContent) called as text streams in
-  async function callProsecutor(accusation, phase, messages, defenseText = '', round = 0, isDynamic = false, onChunk = null) {
+  async function callProsecutor(accusation, phase, messages, defenseText = '', round = 0, isDynamic = false, onChunk = null, difficulty = 'normal') {
     const room = roomRef.current
     const trialId = trialIdRef.current
     const history = messages
@@ -202,7 +211,7 @@ export function useTrial() {
       try {
         const res = await sendViaLiveKit(
           room,
-          { type: 'defense_submitted', trialId, accusation, phase, round, history, text: defenseText, isDynamic },
+          { type: 'defense_submitted', trialId, accusation, phase, round, history, text: defenseText, isDynamic, difficulty },
           'prosecutor_response',
           20000,
         )
@@ -219,7 +228,7 @@ export function useTrial() {
 
     // Dynamic mode needs JSON response - no streaming
     if (isDynamic) {
-      const data = await apiPost('/api/prosecutor', { accusation, phase, history, round, isDynamic })
+      const data = await apiPost('/api/prosecutor', { accusation, phase, history, round, isDynamic, difficulty })
       return {
         content: normalizeProsecutorText(data.content),
         requestAnotherRound: data.requestAnotherRound ?? false,
@@ -229,7 +238,7 @@ export function useTrial() {
 
     // Stream fixed-mode responses
     let content = ''
-    for await (const chunk of apiStream('/api/prosecutor', { accusation, phase, history, round, isDynamic, stream: true })) {
+    for await (const chunk of apiStream('/api/prosecutor', { accusation, phase, history, round, isDynamic, difficulty, stream: true })) {
       content += chunk
       if (onChunk) onChunk(content)
     }
@@ -261,7 +270,7 @@ export function useTrial() {
   }
 
   // ── startTrial ───────────────────────────────────────────────────
-  const startTrial = useCallback(async (accusation, rounds = DEFAULT_ROUNDS) => {
+  const startTrial = useCallback(async (accusation, rounds = DEFAULT_ROUNDS, difficulty = 'normal') => {
     trialIdRef.current = uuidv4()
     const isDynamic = rounds === 'dynamic'
     const numRounds = isDynamic ? DEFAULT_ROUNDS : rounds
@@ -270,7 +279,7 @@ export function useTrial() {
 
     dispatch({
       type: 'START_TRIAL',
-      payload: { accusation, rounds, isDynamic, phaseOrder, transitions },
+      payload: { accusation, rounds, isDynamic, difficulty, phaseOrder, transitions },
     })
     dispatch({ type: 'SET_LOADING', payload: true })
     dispatch({ type: 'SET_ERROR', payload: null })
@@ -283,7 +292,7 @@ export function useTrial() {
       })
       await callProsecutor(accusation, PHASES.OPENING, [], '', 0, false, (partial) => {
         dispatch({ type: 'UPDATE_MESSAGE', payload: { id: msgId, content: partial } })
-      })
+      }, difficulty)
     } catch (err) {
       dispatch({ type: 'SET_ERROR', payload: err.message })
     } finally {
@@ -297,6 +306,7 @@ export function useTrial() {
     const currentPhase = state.phase
     const currentRound = state.round
     const isDynamic = state.isDynamic
+    const difficulty = state.difficulty
 
     const defenseMsg = {
       id: uuidv4(), role: 'defense', content: text,
@@ -339,7 +349,7 @@ export function useTrial() {
         dispatch({ type: 'ADD_MESSAGE', payload: { id: closingId, role: 'prosecutor', content: '', timestamp: Date.now(), phase: 'CLOSING', round: 0 } })
         await callProsecutor(state.accusation, 'CLOSING', msgsForClosing, '', 0, false, (partial) => {
           dispatch({ type: 'UPDATE_MESSAGE', payload: { id: closingId, content: partial } })
-        })
+        }, difficulty)
       }
 
       try {
@@ -369,7 +379,7 @@ export function useTrial() {
 
         const msgId = uuidv4()
         dispatch({ type: 'ADD_MESSAGE', payload: { id: msgId, role: 'prosecutor', content: '', timestamp: Date.now(), phase: nextPhase, round: nextRound } })
-        const response = await callProsecutor(state.accusation, nextPhase, updatedMessages, text, nextRound, true, null)
+        const response = await callProsecutor(state.accusation, nextPhase, updatedMessages, text, nextRound, true, null, difficulty)
         dispatch({ type: 'UPDATE_MESSAGE', payload: { id: msgId, content: response.content } })
 
         // After intervention, only allow 2 more rounds total (COURT_INTERVENTION_ROUND + 1 and +2)
@@ -417,7 +427,8 @@ export function useTrial() {
       dispatch({ type: 'ADD_MESSAGE', payload: { id: msgId, role: 'prosecutor', content: '', timestamp: Date.now(), phase: next.phase, round: next.round } })
       const response = await callProsecutor(
         state.accusation, next.phase, updatedMessages, text, next.round, isOpeningDynamic,
-        isOpeningDynamic ? null : (partial) => { dispatch({ type: 'UPDATE_MESSAGE', payload: { id: msgId, content: partial } }) }
+        isOpeningDynamic ? null : (partial) => { dispatch({ type: 'UPDATE_MESSAGE', payload: { id: msgId, content: partial } }) },
+        difficulty
       )
 
       if (isOpeningDynamic) {
@@ -430,7 +441,7 @@ export function useTrial() {
           dispatch({ type: 'ADD_MESSAGE', payload: { id: closingId, role: 'prosecutor', content: '', timestamp: Date.now(), phase: 'CLOSING', round: 0 } })
           await callProsecutor(state.accusation, 'CLOSING', [...updatedMessages, { id: 'tmp', role: 'prosecutor', content: response.content }], '', 0, false, (partial) => {
             dispatch({ type: 'UPDATE_MESSAGE', payload: { id: closingId, content: partial } })
-          })
+          }, difficulty)
         }
       } else {
         dispatch({ type: 'ADVANCE_PHASE' })
@@ -445,8 +456,10 @@ export function useTrial() {
   // ── requestHint ──────────────────────────────────────────────────
   // onChunk: callback(partialText) called as hint streams in
   const requestHint = useCallback(async (onChunk) => {
+    if (state.hintsUsed >= MAX_HINTS) return null
     const lastProsecutorMsg = [...state.messages].reverse().find(m => m.role === 'prosecutor')
     if (!lastProsecutorMsg) return null
+    dispatch({ type: 'USE_HINT' })
     const room = roomRef.current
     try {
       if (room?.localParticipant) {
@@ -484,11 +497,13 @@ export function useTrial() {
     round: state.round,
     rounds: state.rounds,
     isDynamic: state.isDynamic,
+    difficulty: state.difficulty,
     phaseOrder: state.phaseOrder,
     dynamicRoundReasons: state.dynamicRoundReasons,
     verdict: state.verdict,
     scores: state.scores,
     fallacies: state.fallacies,
+    hintsUsed: state.hintsUsed,
     isLoading: state.isLoading,
     error: state.error,
     startTrial,

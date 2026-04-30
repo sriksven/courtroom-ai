@@ -3,8 +3,10 @@ import { useTrialContext } from '../../context/TrialContext.jsx'
 import { useVoice, VOICE_STATES } from '../../hooks/useVoice.js'
 import { PHASES } from '../../constants/phases.js'
 
+import { MAX_HINTS } from '../../hooks/useTrial.js'
+
 export default function TrialInputBar() {
-  const { phase, isLoading, error, submitDefense, requestHint } = useTrialContext()
+  const { phase, isLoading, error, submitDefense, requestHint, hintsUsed } = useTrialContext()
   const [inputText, setInputText] = useState('')
   const [hintText, setHintText] = useState(null)
   const [hintLoading, setHintLoading] = useState(false)
@@ -44,6 +46,7 @@ export default function TrialInputBar() {
   }
 
   const isClosing = phase === PHASES.CLOSING
+  const hintsLeft = MAX_HINTS - hintsUsed
   const submitDisabled = !inputText.trim() || isLoading
 
   return (
@@ -142,7 +145,7 @@ export default function TrialInputBar() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <button
           onClick={handleHint}
-          disabled={isLoading || hintLoading || isClosing}
+          disabled={isLoading || hintLoading || isClosing || hintsLeft <= 0}
           style={{
             background: 'none',
             border: 'none',
@@ -150,15 +153,15 @@ export default function TrialInputBar() {
             fontFamily: 'Georgia, serif',
             fontSize: '12px',
             fontStyle: 'italic',
-            cursor: isClosing ? 'default' : 'pointer',
+            cursor: (isClosing || hintsLeft <= 0) ? 'default' : 'pointer',
             padding: 0,
-            opacity: isLoading || hintLoading || isClosing ? 0.4 : 1,
+            opacity: isLoading || hintLoading || isClosing || hintsLeft <= 0 ? 0.4 : 1,
             display: 'flex',
             alignItems: 'center',
             gap: '4px',
           }}
         >
-          {hintLoading ? '...' : '?'} Get a Hint
+          {hintLoading ? '...' : hintsLeft <= 0 ? 'No hints remaining' : `? Get a Hint (${hintsLeft} left)`}
         </button>
 
         <button

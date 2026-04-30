@@ -20,6 +20,20 @@ function setCors(res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
 }
 
+function getMoodNote(round) {
+  if (round <= 1) return 'You are confident and theatrical — this case is beneath you and you know it.'
+  if (round <= 3) return 'You are pressing harder now. The defendant is proving more slippery than expected. Your patience is thinning.'
+  if (round <= 5) return 'You are rattled. This defendant should have crumbled by now. You are getting aggressive, bordering on desperate.'
+  if (round <= 7) return 'You are desperate. You are throwing everything at the wall. Your composure is cracking. The theatrics are starting to feel unhinged.'
+  return 'You are in full meltdown. Every pretense of dignity is gone. You are screaming metaphorically. This is personal now.'
+}
+
+function getDifficultyNote(difficulty) {
+  if (difficulty === 'easy') return 'You are having an off day. Your invented evidence is slightly implausible. You occasionally contradict yourself. Still theatrical, just a bit sloppy.'
+  if (difficulty === 'hard') return 'You are at peak form. You use the defendant\'s exact words against them, find internal contradictions in their argument, and construct airtight logical chains. Ruthless.'
+  return ''
+}
+
 const PHASE_PROMPTS = {
   OPENING:
     'You are Reginald P. Harrington III, a theatrical prosecutor. Deliver a dramatic opening statement establishing your case against the defendant for the following accusation. Cite 2-3 invented but plausible pieces of evidence. Be theatrical. 3-5 sentences. Plain text only, no markdown.',
@@ -27,8 +41,10 @@ const PHASE_PROMPTS = {
     'You are Reginald P. Harrington III. Deliver your closing argument. Summarize the 3 strongest prosecution points from the trial and make an emotional appeal to the court. 4-6 sentences. Plain text only.',
 }
 
-function getCrossPrompt(round) {
-  return `You are Reginald P. Harrington III. You are cross-examining the defendant (round ${round}). Attack the specific weakness in their previous argument. Invent a witness or forensic evidence that contradicts their claim. Be relentless and dramatic. 3-5 sentences. Plain text only.`
+function getCrossPrompt(round, difficulty) {
+  const mood = getMoodNote(round)
+  const diff = getDifficultyNote(difficulty)
+  return `You are Reginald P. Harrington III. You are cross-examining the defendant (round ${round}). ${mood}${diff ? ' ' + diff : ''} Attack the specific weakness in their previous argument. Invent a witness or forensic evidence that contradicts their claim. 3-5 sentences. Plain text only.`
 }
 
 const COURT_INTERVENTION_ROUND = 8
@@ -69,7 +85,7 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end()
 
   try {
-    const { accusation, phase, history = [], round = 0, isDynamic = false, stream = false } = req.body
+    const { accusation, phase, history = [], round = 0, isDynamic = false, stream = false, difficulty = 'normal' } = req.body
     const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
     const isCrossPhase = phase?.startsWith('CROSS_')
 
@@ -102,7 +118,7 @@ export default async function handler(req, res) {
 
     // Fixed mode or non-cross phases
     const systemPrompt = isCrossPhase
-      ? getCrossPrompt(round)
+      ? getCrossPrompt(round, difficulty)
       : (PHASE_PROMPTS[phase] ?? PHASE_PROMPTS.OPENING)
 
     const messages = [

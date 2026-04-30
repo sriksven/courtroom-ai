@@ -22,6 +22,7 @@ function wrap(handlerPromise) {
   }
 }
 
+app.all('/api/generate-charge', wrap(loadHandler('./api/generate-charge.js')))
 app.all('/api/prosecutor', wrap(loadHandler('./api/prosecutor.js')))
 app.all('/api/judge', wrap(loadHandler('./api/judge.js')))
 app.all('/api/defense-hint', wrap(loadHandler('./api/defense-hint.js')))

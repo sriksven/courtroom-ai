@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTrialContext } from '../../context/TrialContext.jsx'
 import { useVoice } from '../../hooks/useVoice.js'
 import { useVoiceMode } from '../../hooks/useVoiceMode.js'
@@ -9,9 +9,30 @@ import TrialInputBar from './TrialInputBar.jsx'
 import VoiceStatus from './VoiceStatus.jsx'
 import MicIndicator from './MicIndicator.jsx'
 
+function useTrialTimer() {
+  const [elapsed, setElapsed] = useState(0)
+  const startRef = useRef(Date.now())
+  useEffect(() => {
+    const id = setInterval(() => setElapsed(Math.floor((Date.now() - startRef.current) / 1000)), 1000)
+    return () => clearInterval(id)
+  }, [])
+  const m = Math.floor(elapsed / 60)
+  const s = elapsed % 60
+  return `${m}:${String(s).padStart(2, '0')}`
+}
+
+function getLoadingMessage(phase) {
+  if (phase === 'OPENING') return 'Reginald is consulting his fabricated evidence...'
+  if (phase === 'CLOSING') return 'Reginald is preparing his closing blow...'
+  if (phase === 'VERDICT') return 'Judge Virtue is reviewing the full transcript...'
+  if (phase?.startsWith('CROSS_')) return 'Reginald is sharpening his attack...'
+  return 'The court deliberates...'
+}
+
 // voiceModeOn: 'off' | 'hybrid' | 'full'
 export default function TrialPage({ onVerdict, onBack, voiceModeOn, onVoiceModeChange, theme, onToggleTheme }) {
   const { messages, isLoading, phase, round, rounds, isDynamic, phaseOrder, accusation, submitDefense, verdict } = useTrialContext()
+  const timer = useTrialTimer()
 
   // Voice input for hybrid mode (STT only — TTS is manual via play buttons)
   const { isAvailable: voiceInputAvailable } = useVoice({ onTranscript: () => {}, enabled: false })
@@ -169,11 +190,14 @@ export default function TrialPage({ onVerdict, onBack, voiceModeOn, onVoiceModeC
               : ` of ${rounds}`
             : ''}
         </span>
+        <span style={{ fontSize: '11px', color: 'var(--text-muted)', opacity: 0.6, marginLeft: 'auto' }}>
+          {timer}
+        </span>
       </div>
       </div>
 
       {/* Chat */}
-      <TrialChatArea messages={messages} isLoading={isLoading} />
+      <TrialChatArea messages={messages} isLoading={isLoading} loadingMessage={getLoadingMessage(phase)} />
 
       {/* Bottom bar */}
       {phase !== PHASES.VERDICT && (
