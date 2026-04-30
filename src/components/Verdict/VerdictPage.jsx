@@ -34,7 +34,7 @@ function ScoreItem({ label, value, description, delay }) {
 }
 
 export default function VerdictPage({ onNewCase, voiceModeOn }) {
-  const { verdict, fallacies, dynamicRoundReasons, resetTrial } = useTrialContext()
+  const { verdict, fallacies, dynamicRoundReasons, resetTrial, round, interventionDelivered } = useTrialContext()
   const { total, percentage, grade, breakdown, ready: scoresReady } = useScoring(verdict?.scores)
   const [revealed, setRevealed] = useState(false)
 
@@ -236,6 +236,22 @@ export default function VerdictPage({ onNewCase, voiceModeOn }) {
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* Court intervention note */}
+        {interventionDelivered && (
+          <div style={{
+            padding: '0.75rem 1rem',
+            border: '1px solid var(--border)',
+            background: 'var(--judge-bg)',
+            fontSize: '12px',
+            fontStyle: 'italic',
+            color: 'var(--text-muted)',
+            textAlign: 'center',
+            lineHeight: 1.5,
+          }}>
+            ⚖ The court intervened at round 8 — this trial ran {round} round{round !== 1 ? 's' : ''} in total
           </div>
         )}
 

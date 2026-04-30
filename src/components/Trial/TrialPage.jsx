@@ -31,7 +31,7 @@ function getLoadingMessage(phase) {
 
 // voiceModeOn: 'off' | 'hybrid' | 'full'
 export default function TrialPage({ onVerdict, onBack, voiceModeOn, onVoiceModeChange, theme, onToggleTheme }) {
-  const { messages, isLoading, phase, round, rounds, isDynamic, phaseOrder, accusation, submitDefense, verdict } = useTrialContext()
+  const { messages, isLoading, phase, round, rounds, isDynamic, phaseOrder, accusation, submitDefense, verdict, interventionDelivered, roundsAfterIntervention } = useTrialContext()
   const timer = useTrialTimer()
 
   // Voice input for hybrid mode (STT only — TTS is manual via play buttons)
@@ -190,6 +190,18 @@ export default function TrialPage({ onVerdict, onBack, voiceModeOn, onVoiceModeC
               : ` of ${rounds}`
             : ''}
         </span>
+        {interventionDelivered && phase !== PHASES.CLOSING && phase !== PHASES.VERDICT && (
+          <span style={{
+            fontSize: '10px',
+            letterSpacing: '0.1em',
+            color: 'var(--text-muted)',
+            border: '1px solid var(--border)',
+            padding: '2px 8px',
+            background: 'var(--judge-bg)',
+          }}>
+            ⚖ {Math.max(0, 2 - roundsAfterIntervention)} round{2 - roundsAfterIntervention !== 1 ? 's' : ''} left
+          </span>
+        )}
         <span style={{ fontSize: '11px', color: 'var(--text-muted)', opacity: 0.6, marginLeft: 'auto' }}>
           {timer}
         </span>

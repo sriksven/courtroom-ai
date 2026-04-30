@@ -161,6 +161,27 @@ function ChatBubble({ message, player }) {
   }
 
   if (role === 'judge') {
+    if (message.isIntervention) {
+      return (
+        <div className="bubble-in" style={{
+          margin: '1.25rem auto',
+          maxWidth: '600px',
+          padding: '1rem 1.5rem',
+          background: 'var(--judge-bg)',
+          border: '1px solid var(--judge-border)',
+          borderTop: '3px solid var(--text-muted)',
+          textAlign: 'center',
+        }}>
+          <div style={{ fontSize: '9px', letterSpacing: '0.3em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '0.5rem', fontWeight: 600 }}>
+            ⚖ The Court — Order
+          </div>
+          <p style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: '13px', color: 'var(--text)', margin: '0 0 0.5rem', lineHeight: 1.6 }}>
+            {displayContent}
+          </p>
+          <PlayButton msgId={message.id} text={displayContent} voice="shimmer" player={player} />
+        </div>
+      )
+    }
     return (
       <div className="bubble-in" style={{ textAlign: 'center', padding: '1rem 2rem', margin: '0.5rem 0' }}>
         <div style={{ fontSize: '10px', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '4px' }}>

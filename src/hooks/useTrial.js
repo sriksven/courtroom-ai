@@ -5,6 +5,15 @@ import { buildFullTranscript } from '../utils/transcriptManager.js'
 
 export const MAX_HINTS = 3
 
+const INTERVENTION_MESSAGES = [
+  'Order! This cross-examination has gone on far too long. The court will allow each party two final rounds to make their case before we move to closing arguments.',
+  'The court notes that this matter has been argued at considerable length. You have two rounds to finalize your positions. After that, closing arguments will begin. There will be no exceptions.',
+  'Both parties have two rounds remaining before this court moves to closing statements. Make them count.',
+  'Enough. Two rounds remain. Use them wisely.',
+]
+
+const FINAL_ROUND_MESSAGE = 'This is your final round. Closing arguments follow immediately after.'
+
 const initialState = {
   phase: PHASES.SETUP,
   accusation: null,
@@ -16,6 +25,8 @@ const initialState = {
   phaseOrder: buildPhaseOrder(DEFAULT_ROUNDS),
   transitions: buildPhaseTransitions(DEFAULT_ROUNDS),
   dynamicRoundReasons: [],      // why the prosecutor requested each extra round
+  interventionDelivered: false,
+  roundsAfterIntervention: 0,
   verdict: null,
   scores: null,
   fallacies: [],
@@ -38,10 +49,18 @@ function reducer(state, action) {
         transitions: action.payload.transitions,
         dynamicRoundReasons: [],
         hintsUsed: 0,
+        interventionDelivered: false,
+        roundsAfterIntervention: 0,
       }
 
     case 'USE_HINT':
       return { ...state, hintsUsed: state.hintsUsed + 1 }
+
+    case 'COURT_INTERVENED':
+      return { ...state, interventionDelivered: true, roundsAfterIntervention: 0 }
+
+    case 'INCREMENT_POST_INTERVENTION':
+      return { ...state, roundsAfterIntervention: state.roundsAfterIntervention + 1 }
 
     case 'ADD_MESSAGE':
       return { ...state, messages: [...state.messages, action.payload] }
@@ -361,17 +380,20 @@ export function useTrial() {
 
         // Court intervenes at COURT_INTERVENTION_ROUND — warn both parties
         if (currentRound === COURT_INTERVENTION_ROUND) {
+          const msg = INTERVENTION_MESSAGES[Math.floor(Math.random() * INTERVENTION_MESSAGES.length)]
           dispatch({
             type: 'ADD_MESSAGE',
             payload: {
               id: uuidv4(),
               role: 'judge',
-              content: 'Order! This cross-examination has gone on far too long. The court will allow each party two final rounds to make their case before we move to closing arguments.',
+              content: msg,
               timestamp: Date.now(),
               phase: currentPhase,
               round: currentRound,
+              isIntervention: true,
             },
           })
+          dispatch({ type: 'COURT_INTERVENED' })
         }
 
         const nextRound = currentRound + 1
@@ -382,9 +404,31 @@ export function useTrial() {
         const response = await callProsecutor(state.accusation, nextPhase, updatedMessages, text, nextRound, true, null, difficulty)
         dispatch({ type: 'UPDATE_MESSAGE', payload: { id: msgId, content: response.content } })
 
-        // After intervention, only allow 2 more rounds total (COURT_INTERVENTION_ROUND + 1 and +2)
-        const roundsAfterIntervention = nextRound - COURT_INTERVENTION_ROUND
-        const forcedClose = roundsAfterIntervention >= 2
+        // Track rounds after intervention
+        const isPostIntervention = currentRound >= COURT_INTERVENTION_ROUND
+        if (isPostIntervention) {
+          dispatch({ type: 'INCREMENT_POST_INTERVENTION' })
+        }
+
+        // After intervention, only allow 2 more rounds total
+        const roundsUsedAfter = nextRound - COURT_INTERVENTION_ROUND
+        const forcedClose = roundsUsedAfter >= 2
+
+        // Round-9 reminder: one round left
+        if (roundsUsedAfter === 1) {
+          dispatch({
+            type: 'ADD_MESSAGE',
+            payload: {
+              id: uuidv4(),
+              role: 'judge',
+              content: FINAL_ROUND_MESSAGE,
+              timestamp: Date.now(),
+              phase: nextPhase,
+              round: nextRound,
+              isIntervention: true,
+            },
+          })
+        }
 
         if (response.requestAnotherRound && !forcedClose) {
           dispatch({ type: 'ADD_DYNAMIC_ROUND', payload: { reason: response.reason } })
@@ -500,6 +544,8 @@ export function useTrial() {
     difficulty: state.difficulty,
     phaseOrder: state.phaseOrder,
     dynamicRoundReasons: state.dynamicRoundReasons,
+    interventionDelivered: state.interventionDelivered,
+    roundsAfterIntervention: state.roundsAfterIntervention,
     verdict: state.verdict,
     scores: state.scores,
     fallacies: state.fallacies,
