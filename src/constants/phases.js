@@ -11,7 +11,8 @@ export const PHASES = {
 export const DEFAULT_ROUNDS = 3
 export const MIN_ROUNDS = 1
 export const MAX_ROUNDS = 5
-export const DYNAMIC_HARD_CAP = 6
+export const COURT_INTERVENTION_ROUND = 8  // judge warns both parties to wrap up
+export const DYNAMIC_HARD_CAP = 10         // absolute maximum rounds
 
 export function buildPhaseOrder(rounds) {
   const crossPhases = Array.from({ length: rounds }, (_, i) => `CROSS_${i + 1}`)

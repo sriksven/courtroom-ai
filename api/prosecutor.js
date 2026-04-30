@@ -31,21 +31,30 @@ function getCrossPrompt(round) {
   return `You are Reginald P. Harrington III. You are cross-examining the defendant (round ${round}). Attack the specific weakness in their previous argument. Invent a witness or forensic evidence that contradicts their claim. Be relentless and dramatic. 3-5 sentences. Plain text only.`
 }
 
+const COURT_INTERVENTION_ROUND = 8
+const DYNAMIC_HARD_CAP = 10
+
 function getDynamicCrossPrompt(accusation, round) {
+  const remainingAfterThis = DYNAMIC_HARD_CAP - round
+  const courtWarned = round > COURT_INTERVENTION_ROUND
+  const urgencyNote = courtWarned
+    ? `IMPORTANT: The court has intervened and ordered both parties to wrap up. You have ${remainingAfterThis} round(s) left before closing arguments are mandatory. Only request another round if absolutely critical.`
+    : `You have examined the defendant for ${round} round(s). Maximum allowed before the court intervenes: ${COURT_INTERVENTION_ROUND}.`
+
   return `You are Reginald P. Harrington III, a theatrical courtroom prosecutor.
 The defendant is accused of: "${accusation}"
-This is cross-examination round ${round}. Maximum rounds allowed: 6.
+This is cross-examination round ${round}. ${urgencyNote}
 
 After cross-examining the defendant, decide whether you need another round.
 Request another round ONLY if:
 - The defendant has not addressed a key piece of evidence
-- You have a new line of attack that would significantly strengthen the case
-- You are at round 3 or earlier
+- You have a genuinely new line of attack that would significantly strengthen the case
+- You are at round 5 or earlier
 
 Do NOT request another round if:
-- You are at round 4 or beyond
+- You are at round 6 or beyond
 - The defendant has addressed your main points sufficiently
-- You have made your case
+- The court has already warned you to wrap up
 
 Respond ONLY with valid JSON - no markdown, no extra text:
 {

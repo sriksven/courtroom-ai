@@ -1,6 +1,6 @@
 import { useReducer, useCallback, useRef } from 'react'
 import { v4 as uuidv4 } from 'uuid'
-import { PHASES, DEFAULT_ROUNDS, DYNAMIC_HARD_CAP, buildPhaseOrder, buildPhaseTransitions } from '../constants/phases.js'
+import { PHASES, DEFAULT_ROUNDS, DYNAMIC_HARD_CAP, COURT_INTERVENTION_ROUND, buildPhaseOrder, buildPhaseTransitions } from '../constants/phases.js'
 import { buildFullTranscript } from '../utils/transcriptManager.js'
 
 const initialState = {
@@ -297,7 +297,6 @@ export function useTrial() {
     const currentPhase = state.phase
     const currentRound = state.round
     const isDynamic = state.isDynamic
-    const isAtHardCap = currentRound >= DYNAMIC_HARD_CAP
 
     const defenseMsg = {
       id: uuidv4(), role: 'defense', content: text,
@@ -307,7 +306,7 @@ export function useTrial() {
 
     const updatedMessages = [...state.messages, defenseMsg]
 
-    // CLOSING → VERDICT
+    // ── CLOSING → VERDICT ──────────────────────────────────────────
     if (currentPhase === 'CLOSING') {
       dispatch({ type: 'SET_LOADING', payload: true })
       dispatch({ type: 'SET_ERROR', payload: null })
@@ -329,17 +328,60 @@ export function useTrial() {
       return
     }
 
-    // Hard cap: force closing
-    if (isDynamic && isAtHardCap) {
-      dispatch({ type: 'ADVANCE_TO_CLOSING' })
+    // ── Dynamic mode: CROSS phases (multi-round with court intervention) ──
+    if (isDynamic && currentPhase.startsWith('CROSS_')) {
       dispatch({ type: 'SET_LOADING', payload: true })
       dispatch({ type: 'SET_ERROR', payload: null })
-      try {
-        const msgId = uuidv4()
-        dispatch({ type: 'ADD_MESSAGE', payload: { id: msgId, role: 'prosecutor', content: '', timestamp: Date.now(), phase: 'CLOSING', round: 0 } })
-        await callProsecutor(state.accusation, 'CLOSING', updatedMessages, text, 0, false, (partial) => {
-          dispatch({ type: 'UPDATE_MESSAGE', payload: { id: msgId, content: partial } })
+
+      const streamClosing = async (msgsForClosing) => {
+        dispatch({ type: 'ADVANCE_TO_CLOSING' })
+        const closingId = uuidv4()
+        dispatch({ type: 'ADD_MESSAGE', payload: { id: closingId, role: 'prosecutor', content: '', timestamp: Date.now(), phase: 'CLOSING', round: 0 } })
+        await callProsecutor(state.accusation, 'CLOSING', msgsForClosing, '', 0, false, (partial) => {
+          dispatch({ type: 'UPDATE_MESSAGE', payload: { id: closingId, content: partial } })
         })
+      }
+
+      try {
+        // Absolute hard cap
+        if (currentRound >= DYNAMIC_HARD_CAP) {
+          await streamClosing(updatedMessages)
+          return
+        }
+
+        // Court intervenes at COURT_INTERVENTION_ROUND — warn both parties
+        if (currentRound === COURT_INTERVENTION_ROUND) {
+          dispatch({
+            type: 'ADD_MESSAGE',
+            payload: {
+              id: uuidv4(),
+              role: 'judge',
+              content: 'Order! This cross-examination has gone on far too long. The court will allow each party two final rounds to make their case before we move to closing arguments.',
+              timestamp: Date.now(),
+              phase: currentPhase,
+              round: currentRound,
+            },
+          })
+        }
+
+        const nextRound = currentRound + 1
+        const nextPhase = `CROSS_${nextRound}`
+
+        const msgId = uuidv4()
+        dispatch({ type: 'ADD_MESSAGE', payload: { id: msgId, role: 'prosecutor', content: '', timestamp: Date.now(), phase: nextPhase, round: nextRound } })
+        const response = await callProsecutor(state.accusation, nextPhase, updatedMessages, text, nextRound, true, null)
+        dispatch({ type: 'UPDATE_MESSAGE', payload: { id: msgId, content: response.content } })
+
+        // After intervention, only allow 2 more rounds total (COURT_INTERVENTION_ROUND + 1 and +2)
+        const roundsAfterIntervention = nextRound - COURT_INTERVENTION_ROUND
+        const forcedClose = roundsAfterIntervention >= 2
+
+        if (response.requestAnotherRound && !forcedClose) {
+          dispatch({ type: 'ADD_DYNAMIC_ROUND', payload: { reason: response.reason } })
+        } else {
+          const msgsWithLastCross = [...updatedMessages, { id: 'tmp', role: 'prosecutor', content: response.content }]
+          await streamClosing(msgsWithLastCross)
+        }
       } catch (err) {
         dispatch({ type: 'SET_ERROR', payload: err.message })
       } finally {
@@ -348,7 +390,7 @@ export function useTrial() {
       return
     }
 
-    // Normal cross / opening → next phase
+    // ── Fixed mode / OPENING → next phase (transitions-based) ─────
     const next = state.transitions[currentPhase]
     if (!next) return
 
@@ -356,9 +398,6 @@ export function useTrial() {
     dispatch({ type: 'SET_ERROR', payload: null })
 
     try {
-      const isCrossPhase = currentPhase.startsWith('CROSS_') || currentPhase === 'OPENING'
-      const useDynamic = isDynamic && isCrossPhase && next.phase !== 'CLOSING'
-
       if (next.phase === 'VERDICT') {
         const data = await callJudge(state.accusation, updatedMessages, text)
         dispatch({
@@ -372,29 +411,24 @@ export function useTrial() {
         return
       }
 
+      // Dynamic OPENING: first cross uses dynamic mode so prosecutor can decide after round 1
+      const isOpeningDynamic = isDynamic && currentPhase === 'OPENING'
       const msgId = uuidv4()
       dispatch({ type: 'ADD_MESSAGE', payload: { id: msgId, role: 'prosecutor', content: '', timestamp: Date.now(), phase: next.phase, round: next.round } })
       const response = await callProsecutor(
-        state.accusation, next.phase, updatedMessages, text, next.round, useDynamic,
-        useDynamic ? null : (partial) => { dispatch({ type: 'UPDATE_MESSAGE', payload: { id: msgId, content: partial } }) }
+        state.accusation, next.phase, updatedMessages, text, next.round, isOpeningDynamic,
+        isOpeningDynamic ? null : (partial) => { dispatch({ type: 'UPDATE_MESSAGE', payload: { id: msgId, content: partial } }) }
       )
-      // For dynamic mode, the content came back as full JSON - update the placeholder
-      if (useDynamic) {
-        dispatch({ type: 'UPDATE_MESSAGE', payload: { id: msgId, content: response.content } })
-      }
 
-      // Dynamic: decide next phase based on prosecutor's response
-      if (useDynamic) {
+      if (isOpeningDynamic) {
+        dispatch({ type: 'UPDATE_MESSAGE', payload: { id: msgId, content: response.content } })
         if (response.requestAnotherRound) {
           dispatch({ type: 'ADD_DYNAMIC_ROUND', payload: { reason: response.reason } })
         } else {
           dispatch({ type: 'ADVANCE_TO_CLOSING' })
-          // Immediately get prosecutor's closing statement (streamed)
           const closingId = uuidv4()
           dispatch({ type: 'ADD_MESSAGE', payload: { id: closingId, role: 'prosecutor', content: '', timestamp: Date.now(), phase: 'CLOSING', round: 0 } })
-          await callProsecutor(state.accusation, 'CLOSING', [...updatedMessages, {
-            id: 'tmp', role: 'prosecutor', content: response.content,
-          }], '', 0, false, (partial) => {
+          await callProsecutor(state.accusation, 'CLOSING', [...updatedMessages, { id: 'tmp', role: 'prosecutor', content: response.content }], '', 0, false, (partial) => {
             dispatch({ type: 'UPDATE_MESSAGE', payload: { id: closingId, content: partial } })
           })
         }
