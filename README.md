@@ -94,14 +94,29 @@ Browser (React 18 + Vite) - Vercel
 
 ## Key Features
 
-- **3 AI agents** with separate models, memory, and goals operating on the same trial
-- **Prosecutor ReAct loop** - recalls weaknesses, detects fallacies, tracks unused evidence, adapts strategy every round
-- **Per-trial memory** - prosecutor in round 3 knows what it said in rounds 1 and 2
-- **Fixed or dynamic rounds** - choose 1–5 rounds, or let the prosecutor decide after each cross-examination
-- **3 interaction modes** - type, auto-voice (browser STT/TTS while-loop), full live voice (LiveKit WebRTC)
-- **Play/pause/stop TTS** on every chat bubble (3 distinct voices)
-- **Judge scores 4 dimensions** - Argument Strength, Evidence, Logic, Persuasion (max 40pts; ≥24 = Not Guilty)
-- **Animated verdict page** - count-up scores, fallacy list, guilty/not-guilty banner
+**Trial mechanics**
+- **3 AI agents** with separate models, memory, and conflicting goals operating on the same trial
+- **Prosecutor ReAct loop** — recalls weaknesses, detects fallacies, tracks unused evidence, adapts strategy every round
+- **Per-trial memory** — prosecutor in round 3 knows exactly what it said in rounds 1 and 2
+- **Fixed or dynamic rounds** — choose 1–5 rounds, or let the prosecutor decide after each cross-examination (up to 10 rounds)
+- **Prosecutor mood escalation** — confident in round 1, rattled by round 4, desperate by round 7, unhinged by round 8
+- **Court intervention at round 8** — Judge Constance Virtue breaks her silence mid-trial to order both sides to wrap up in 2 rounds; 4 randomized intervention messages; countdown badge in header; "final round" reminder at round 9
+- **Difficulty selector** — Easy (Reginald is sloppy, contradicts himself), Normal, Hard (uses your exact words against you)
+
+**Input and interaction**
+- **AI charge generator** — type any topic ("coffee", "parking", "my cat") and the AI drafts a formal dramatic charge around it
+- **3 interaction modes** — type, auto-voice (browser STT/TTS while-loop), full live voice (LiveKit WebRTC)
+- **Hint counter** — 3 hints per trial from The Strategist; visible countdown; disabled in closing phase
+- **Play/pause/stop TTS** on every chat bubble (3 distinct voices: Reginald on onyx, Judge on shimmer, you on alloy)
+- **Live speech-to-text** in text mode — mic button transcribes directly into the input box
+
+**Trial UI**
+- **Phase-aware loading messages** — "Reginald is sharpening his attack...", "Judge Virtue is reviewing the transcript..."
+- **Full character names in bubbles** — Reginald P. Harrington III / Judge Constance Virtue / The Defendant
+- **Trial timer** — elapsed mm:ss in the phase header
+- **Distinct intervention bubble style** — intervention messages from the judge are visually distinct from verdict-time judge messages
+- **Judge scores 4 dimensions** — Argument Strength, Evidence, Logic, Persuasion (max 40pts; ≥28 = Not Guilty)
+- **Animated verdict page** — staggered score reveal, fallacy list, guilty/not-guilty banner, court intervention note if applicable
 - **Light/dark theme**, smooth page transitions
 - **79 automated tests** (Vitest + React Testing Library)
 
