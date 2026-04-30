@@ -234,6 +234,8 @@ export function useTrial() {
   const [state, dispatch] = useReducer(reducer, initialState)
   const roomRef = useRef(null)
   const trialIdRef = useRef(null)
+  const stateRef = useRef(state)
+  stateRef.current = state
 
   function setRoom(room) { roomRef.current = room }
 
@@ -342,6 +344,7 @@ export function useTrial() {
 
   // ── submitDefense ────────────────────────────────────────────────
   const submitDefense = useCallback(async (text) => {
+    const state = stateRef.current
     const currentPhase = state.phase
     const currentRound = state.round
     const isDynamic = state.isDynamic
@@ -599,11 +602,12 @@ export function useTrial() {
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false })
     }
-  }, [state])
+  }, [])
 
   // ── requestHint ──────────────────────────────────────────────────
   // onChunk: callback(partialText) called as hint streams in
   const requestHint = useCallback(async (onChunk) => {
+    const state = stateRef.current
     if (state.hintsUsed >= MAX_HINTS) return null
     const lastProsecutorMsg = [...state.messages].reverse().find(m => m.role === 'prosecutor')
     if (!lastProsecutorMsg) return null
@@ -634,9 +638,10 @@ export function useTrial() {
       dispatch({ type: 'SET_ERROR', payload: err.message })
       return null
     }
-  }, [state.messages, state.accusation])
+  }, [])
 
   const callDefenseWitness = useCallback(async () => {
+    const state = stateRef.current
     const config = state.witnessConfig
     const witnessIdx = state.defenseWitnessesUsed
     if (!config?.enabled || witnessIdx >= (config.defenseWitnesses?.length ?? 0)) return
@@ -685,7 +690,7 @@ export function useTrial() {
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false })
     }
-  }, [state.witnessConfig, state.defenseWitnessesUsed, state.accusation, state.phase, state.difficulty, state.messages])
+  }, [])
 
   const resetTrial = useCallback(() => dispatch({ type: 'RESET' }), [])
 
